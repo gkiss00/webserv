@@ -60,7 +60,7 @@ int     main(int argc, char **argv){
     int     socket_count;
     //read the config file
     //get all serverSocket
-    server_sockets.push_back(init_server_socket("127.0.0.1", 5000));
+    server_sockets.push_back(init_server_socket("127.0.0.1", 5000)); // test
     //configure max
     max = server_sockets.back() + 1;
     //configure fd_set
