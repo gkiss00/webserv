@@ -1,4 +1,4 @@
-#include "./../include/webserv.hpp"
+#include "webserv.hpp"
 
 //GLOBAL VARS
 fd_set              current_sockets; //list of all sockets

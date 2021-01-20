@@ -1,21 +1,21 @@
 
-SRCS=	srcs/main/main.cpp \
+SRCS =	srcs/main/main.cpp \
 
-OBJS= ${SRCS:.cpp=.o}
+OBJS = ${SRCS:.cpp=.o}
 
-NAME= webserv
+NAME = webserv
 
-FLAGS = -Wall -Wextra -Werror
+INCDIR = ./srcs/include/
+
+CXX = clang++
+CXXFLAGS = -Wall -Wextra -Werror -I ${INCDIR} 
 
 DELETE = rm -rf
 
 all: ${NAME}
 	
 ${NAME}: ${OBJS}
-	clang++ -o ${NAME} ${FLAGS} ${OBJS}
-
-.cpp.o:
-	clang++ ${FLAGS} -c $< -o $@
+	${CXX} -o ${NAME} ${CPPFLAGS} ${OBJS}
 
 clean:
 	${DELETE} ${OBJS}
