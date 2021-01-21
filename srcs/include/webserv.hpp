@@ -33,10 +33,10 @@
 # include <sstream>
 
 # include "../RequestParser/RequestParser.hpp"
-# include "../response/Response.hpp"
+# include "../Response/Response.hpp"
 # include "tools.hpp"
+# include "data.hpp"
 
-class RequestParser;
-std::string response(RequestParser &query);
+using std::string;
 
 #endif

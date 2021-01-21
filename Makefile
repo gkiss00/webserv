@@ -1,5 +1,6 @@
 SRCS =	srcs/main/main.cpp \
 		srcs/RequestParser/RequestParser.cpp \
+		srcs/data/status_codes.cpp \
 		srcs/tools/date.cpp \
 		srcs/tools/file_to_string.cpp \
 		srcs/tools/split.cpp \

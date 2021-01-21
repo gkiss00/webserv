@@ -175,6 +175,7 @@ int     main(){
                         //write
                         std::cout << "__________RESPONSE__________" << std::endl;
                         Response response(request);
+                        std::cout << response.render();
                         send_client_response(i, response.render());
 
                         //close the socket
