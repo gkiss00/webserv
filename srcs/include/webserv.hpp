@@ -36,6 +36,6 @@
 # include "tools.hpp"
 
 class RequestParser;
-std::string response(RequestParser query);
+std::string response(RequestParser &query);
 
 #endif
