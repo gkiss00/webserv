@@ -28,6 +28,14 @@
 # include <map>
 # include <algorithm>
 
+# include <iomanip>
+# include <fstream>
+# include <sstream>
+
 # include "../RequestParser/RequestParser.hpp"
+# include "tools.hpp"
+
+class RequestParser;
+std::string response(RequestParser query);
 
 #endif
