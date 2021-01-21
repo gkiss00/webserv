@@ -2,7 +2,7 @@ SRCS =	srcs/main/main.cpp \
 		srcs/RequestParser/RequestParser.cpp \
 		srcs/tools/date.cpp \
 		srcs/tools/file_to_string.cpp \
-		srcs/response/response.cpp \
+		srcs/Response/Response.cpp \
 
 OBJS = ${SRCS:.cpp=.o}
 

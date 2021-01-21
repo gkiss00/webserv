@@ -1,52 +1,50 @@
-#include "webserv.hpp"
+#include "Response.hpp"
 
-#define ERROR_PAGES_PATH "srcs/pages/error_page/"
+Response::Response(RequestParser &query)
+: query(query),
+error_pages("srcs/pages/error_page/"),
+status(0),
+content(std::string()),
+content_type("text/html")
+{}
 
-std::string response200(RequestParser &query)
-{
-    std::string file_content = file_to_string(query.path);
+Response::~Response() {}
 
-    std::string ret = std::string("HTTP/1.1 200 OK\n")
-        + "Date: " + string_date() + "\n"
-        + "Content-Type: text/html" + "\n"
-        + "Content-Length: " + std::to_string(file_content.size()) + "\n\n"
-        + file_content
-        + "\r\n";
-
-    return ret;
-}
-
-std::string response404()
-{
-    std::string file_content = file_to_string(std::string(ERROR_PAGES_PATH"404.html"));
-
-    std::string ret = std::string("HTTP/1.1 404 PAGE NOT FOUND\n")
-        + "Date: " + string_date() + "\n"
-        + "Content-Type: text/html" + "\n"
-        + "Content-Length: " + std::to_string(file_content.size()) + "\n\n"
-        + file_content
-        + "\r\n";
-
-    return ret;
-}
-
-std::string response_get(RequestParser &query)
-{
+void        Response::getStatus() {
     struct stat stats;
 
     if (stat(query.path.c_str(), &stats) == 0)
     {
-        return response200(query);
+        status = 200;
     }
     else
     {
-        return response404();
+        status = 404;
     }
 }
 
-std::string response(RequestParser &query)
-{
+void        Response::parse() {
     if (query.command == "GET")
-        return response_get(query);
-    return "";
+    {
+        getStatus();
+        getFile();
+    }
+}
+
+void        Response::getFile() {
+    if (status == 200)
+        content = file_to_string(query.path);
+    else
+        content = file_to_string(error_pages + std::to_string(status) + ".html");
+}
+
+std::string Response::render() {
+
+    parse();
+
+    return std::string("HTTP/1.1 ") + std::to_string(status) + "CODE_STATUS (tmp)" + "\n"
+        + std::string("Date: ") + string_date() + "\n"
+        + std::string("Content-Type: ") + content_type + "\n"
+        + std::string("Content-Length: ") + std::to_string(content.size()) + "\n\n"
+        + content + "\r\n";
 }
