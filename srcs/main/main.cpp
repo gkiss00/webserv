@@ -71,19 +71,36 @@ int     accept_new_connexion(int server_socket)
 }
 
 //ADD THE NEW CLIENT IN FD_SET
-void    add_new_client(int server_socket)
+int     add_new_client(int server_socket)
 {
     int client_socket;
 
     if ((client_socket = accept_new_connexion(server_socket)) == -1)
     {
         std::cout << "Could not add a new client." << std::endl;
-        return ;
+        return -1;
     }
     std::cout << "Client #" << client_socket <<  " has been added to the server." << std::endl;
     FD_SET(client_socket, &current_sockets);
     if(client_socket > max)
         max = client_socket + 1;
+    return (client_socket);
+}
+
+//GET THE REQUEST FROM THE CLIENT
+std::string     get_client_request(int client_socket){
+    char    buf[1001];
+    int     ret;
+
+    ret = recv(client_socket, buf, 1000, 0);
+    buf[ret] = '\0';
+    std::cout << buf << std::endl;
+    return (std::string(buf));
+}
+
+//SEND THE RESPONSE TO THE CLIENT
+void        send_client_response(int client_socket, std::string response){
+    send(client_socket, response.c_str(), response.length() + 1, 0);
 }
 
 //ENTRY POINT
@@ -124,21 +141,23 @@ int     main(int argc, char **argv){
                 if (FD_ISSET(i, &copy)){
                     //accept new connexion
                     if (isServerSocket(i)){
-                        add_new_client(i);
                         std::cout << "new connexion" << std::endl;
+                        //accept
+                        add_new_client(i);
                     //get action from client
                     }else{
                         std::cout << "new request" << std::endl;
+                        //read
+                        std::string request = get_client_request(i);
+                        //write
+                        //close the socket
                     }
                 }
             }
         }
-        //accept
-        //read
-        //write
-        for (unsigned int i = 0; i < server_sockets.size(); ++i){
-            close(server_sockets.at(i));
-        }
+    }
+    for (unsigned int i = 0; i < server_sockets.size(); ++i){
+        close(server_sockets.at(i));
     }
     return (EXIT_SUCCESS);
 }
