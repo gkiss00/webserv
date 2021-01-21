@@ -103,6 +103,11 @@ void        send_client_response(int client_socket, std::string response){
     send(client_socket, response.c_str(), response.length() + 1, 0);
 }
 
+void        close_client_socket(int client_socket){
+    FD_CLR(client_socket, &current_sockets);
+    close(client_socket);
+}
+
 //ENTRY POINT
 int     main(int argc, char **argv){
     argv = NULL;
@@ -151,6 +156,7 @@ int     main(int argc, char **argv){
                         std::string request = get_client_request(i);
                         //write
                         //close the socket
+                        close_client_socket(i);
                     }
                 }
             }
