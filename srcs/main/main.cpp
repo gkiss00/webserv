@@ -58,6 +58,15 @@ int     main(int argc, char **argv){
     argv = NULL;
     std::cout << argc << std::endl;
 
+    RequestParser   request("GET /path/to/file/index.html HTTP/1.0\r\nHeader1: some-long-value-1a, some-long-value-1b\r\nHEADER1:       some-long-value-1a,\r\n\t\t some-long-value-1b\r\n\r\nbody");
+    // std::cout << "Command = " << request.command << std::endl;
+    // std::cout << "Path = " << request.path << std::endl;
+    // std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
+    // for(std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
+    //     std::cout << "Headers = " << it->first << " : " << it->second << std::endl;
+    // }
+    // std::cout << "Body = " << request.body;
+
     fd_set  copy;
     int     socket_count;
     //read the config file

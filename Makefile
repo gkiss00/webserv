@@ -1,5 +1,5 @@
-
 SRCS =	srcs/main/main.cpp \
+		srcs/RequestParser/RequestParser.cpp \
 
 OBJS = ${SRCS:.cpp=.o}
 

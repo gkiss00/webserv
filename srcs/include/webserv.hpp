@@ -28,4 +28,6 @@
 # include <map>
 # include <algorithm>
 
+# include "../RequestParser/RequestParser.hpp"
+
 #endif
