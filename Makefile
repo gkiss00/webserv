@@ -2,6 +2,8 @@ SRCS =	srcs/main/main.cpp \
 		srcs/RequestParser/RequestParser.cpp \
 		srcs/tools/date.cpp \
 		srcs/tools/file_to_string.cpp \
+		srcs/tools/split.cpp \
+		srcs/tools/trim.cpp \
 		srcs/response/response.cpp \
 
 OBJS = ${SRCS:.cpp=.o}
@@ -13,7 +15,7 @@ INCDIR = ./srcs/include/
 CXX = clang++
 CXXFLAGS = -Wall -Wextra -Werror -I${INCDIR}
 
-DELETE = rm -rf
+DELETE = rm -f
 
 all: ${NAME}
 	
@@ -24,7 +26,7 @@ clean:
 	${DELETE} ${OBJS}
 
 fclean: clean
-	${DELETE} ${NAME};
+	${DELETE} ${NAME}
 
 re: fclean all
 

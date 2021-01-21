@@ -161,11 +161,9 @@ int     main(){
                     //get action from client
                     }else{
                         std::cout << "new request" << std::endl;
-                        //read
-                        std::string tmp_request = get_client_request(i);
-                        //write
 
-                        RequestParser   request(tmp_request);
+                        //read
+                        RequestParser   request(get_client_request(i));
                         std::cout << "Command = " << request.command << std::endl;
                         std::cout << "Path = " << request.path << std::endl;
                         std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
@@ -174,10 +172,10 @@ int     main(){
                         }
                         std::cout << "Body = " << request.body << std::endl;
 
+                        //write
                         std::cout << "__________RESPONSE__________" << std::endl;
-
-                        std::cout << response(request);
-                        send_client_response(i, response(request));
+                        Response response(request);
+                        send_client_response(i, response.render());
 
                         //close the socket
                         close_client_socket(i);
