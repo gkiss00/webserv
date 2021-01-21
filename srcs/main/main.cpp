@@ -22,7 +22,7 @@ int     init_server_socket(std::string host, int port)
     //create the socket in IPV4 in STREAM protocol
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        std::cout << "We have got a socket problem, quitting." << std::endl;
+        perror("We have got a socket problem, quitting: ");
         return (-1);
     }
     //fill the struct the server socket will refere to
@@ -32,12 +32,14 @@ int     init_server_socket(std::string host, int port)
     //bind the server socket with the struct
     if (bind(server_socket, (const struct sockaddr *)&addrServer, sizeof(addrServer)) == -1)
     {
-        std::cout << "Bind failed, quitting." << std::endl;
+        perror("Bind failed, quitting: ");
+        close(server_socket);
         return (-1);
     }
     std::cout << "Bind #" << server_socket <<  " succeed." << std::endl;
     if (configureNonBloking(server_socket) == -1){
-        std::cout << "Non blocking failed, quitting." << std::endl;
+        perror("Non blocking failed, quitting: ");
+        close(server_socket);
         return (-1);
     }
     return (server_socket);
@@ -61,6 +63,9 @@ int     main(int argc, char **argv){
     //read the config file
     //get all serverSocket
     server_sockets.push_back(init_server_socket("127.0.0.1", 5000)); // test
+    if (server_sockets.back() == -1){
+        return (EXIT_FAILURE);
+    }
     //configure max
     max = server_sockets.back() + 1;
     //configure fd_set
@@ -97,6 +102,10 @@ int     main(int argc, char **argv){
         //accept
         //read
         //write
-        //maybe close
+        for (unsigned int i = 0; i < server_sockets.size(); ++i){
+            close(server_sockets.at(i));
+        }
     }
+    }
+    return (EXIT_SUCCESS);
 }
