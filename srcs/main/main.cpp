@@ -82,8 +82,8 @@ void    add_new_client(int server_socket)
     }
     std::cout << "Client #" << client_socket <<  " has been added to the server." << std::endl;
     FD_SET(client_socket, &current_sockets);
-    if(client_socket > max_socket)
-        max_socket = client_socket + 1;
+    if(client_socket > max)
+        max = client_socket + 1;
 }
 
 //ENTRY POINT
@@ -139,7 +139,6 @@ int     main(int argc, char **argv){
         for (unsigned int i = 0; i < server_sockets.size(); ++i){
             close(server_sockets.at(i));
         }
-    }
     }
     return (EXIT_SUCCESS);
 }
