@@ -4,7 +4,7 @@ SRCS =	srcs/main/main.cpp \
 		srcs/tools/file_to_string.cpp \
 		srcs/tools/split.cpp \
 		srcs/tools/trim.cpp \
-		srcs/response/response.cpp \
+		srcs/response/Response.cpp \
 
 OBJS = ${SRCS:.cpp=.o}
 

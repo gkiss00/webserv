@@ -164,8 +164,8 @@ int     main(){
 
                         std::cout << "__________RESPONSE__________" << std::endl;
 
-                        std::cout << response(request);
-                        send_client_response(i, response(request));
+                        Response response(request);
+                        send_client_response(i, response.render());
 
                         //close the socket
                         close_client_socket(i);

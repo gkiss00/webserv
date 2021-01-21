@@ -33,6 +33,7 @@
 # include <sstream>
 
 # include "../RequestParser/RequestParser.hpp"
+# include "../response/Response.hpp"
 # include "tools.hpp"
 
 class RequestParser;
