@@ -2,6 +2,8 @@ SRCS =	srcs/main/main.cpp \
 		srcs/RequestParser/RequestParser.cpp \
 		srcs/tools/date.cpp \
 		srcs/tools/file_to_string.cpp \
+		srcs/tools/split.cpp \
+		srcs/tools/trim.cpp \
 		srcs/response/response.cpp \
 
 OBJS = ${SRCS:.cpp=.o}
