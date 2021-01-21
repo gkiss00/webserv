@@ -6,7 +6,7 @@ std::vector<int>    server_sockets; //list of all server sockets
 int                 max;
 
 //CONFIGURE NON BLOCKING
-int     configureNonBloking(int fd){
+int     configure_non_bloking(int fd){
     int     ret;
 
     ret = fcntl(fd, F_SETFL, O_NONBLOCK);
@@ -37,7 +37,7 @@ int     init_server_socket(std::string host, int port)
         return (-1);
     }
     std::cout << "Bind #" << server_socket <<  " succeed." << std::endl;
-    if (configureNonBloking(server_socket) == -1){
+    if (configure_non_bloking(server_socket) == -1){
         perror("Non blocking failed, quitting: ");
         close(server_socket);
         return (-1);
@@ -45,12 +45,45 @@ int     init_server_socket(std::string host, int port)
     return (server_socket);
 }
 
+//IS THE SOCKET PART FROM THE SERVER SOCKET
 bool    isServerSocket(int fd){
     for (unsigned int i = 0; i < server_sockets.size(); ++i){
         if (fd == server_sockets.at(i))
             return (true);
     }
     return (false);
+}
+
+//ACCEPT THE CONNECTION
+int     accept_new_connexion(int server_socket)
+{
+    int                 client_socket;
+    struct sockaddr_in  client_address;
+    socklen_t           csize = sizeof(client_address);
+
+    if ((client_socket = accept(server_socket, (struct sockaddr *)&client_address, &csize)) == -1)
+    {
+        std::cout << "Connexion with client failed." << std::endl;
+        return (-1);
+    }
+    std::cout << "Connexion with client succeed." << std::endl;
+    return (client_socket);
+}
+
+//ADD THE NEW CLIENT IN FD_SET
+void    add_new_client(int server_socket)
+{
+    int client_socket;
+
+    if ((client_socket = accept_new_connexion(server_socket)) == -1)
+    {
+        std::cout << "Could not add a new client." << std::endl;
+        return ;
+    }
+    std::cout << "Client #" << client_socket <<  " has been added to the server." << std::endl;
+    FD_SET(client_socket, &current_sockets);
+    if(client_socket > max_socket)
+        max_socket = client_socket + 1;
 }
 
 //ENTRY POINT
@@ -86,11 +119,12 @@ int     main(int argc, char **argv){
             std::cout << "Select error, quitting." << std::endl;
         }else{
             //for each fd
-            for (int i = 0; i < max; ++i){
+            for (int i = 0; i <= max; ++i){
                 //if the fd is in the set
                 if (FD_ISSET(i, &copy)){
                     //accept new connexion
                     if (isServerSocket(i)){
+                        add_new_client(i);
                         std::cout << "new connexion" << std::endl;
                     //get action from client
                     }else{
