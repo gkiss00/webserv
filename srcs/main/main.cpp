@@ -108,10 +108,22 @@ void        close_client_socket(int client_socket){
     close(client_socket);
 }
 
+void signal_handler(int signal){ 
+    std::cout << "Caught signal: " << signal << std::endl;
+    std::cout << "Exiting..." << std::endl;
+    FD_ZERO(&current_sockets);
+    for (unsigned int i = 0; i < server_sockets.size(); ++i){
+        close(server_sockets[i]);
+    }
+    exit(-1);
+}
+
 //ENTRY POINT
 int     main(){
     fd_set  copy;
     int     socket_count;
+
+    signal(SIGINT, signal_handler); 
     //read the config file
     //get all serverSocket
     server_sockets.push_back(init_server_socket("127.0.0.1", 5000)); // test

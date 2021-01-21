@@ -44,9 +44,42 @@ std::string response_get(RequestParser &query)
     }
 }
 
+std::string response_delete200(RequestParser &query)
+{
+    std::cout << "moving " + query.path + "..." << std::endl;
+    if (rename(query.path.c_str(), std::string(query.path + ".del").c_str()) != 0){
+		perror("File deletion failed: ");
+    }else{
+		std::cout << "File deleted successfully" << std::endl;
+    }
+    std::string ret = std::string("HTTP/1.1 200 OK\r\n")
+        + "Date: " + string_date() + "\r\n"
+        + "Content-Type: text/html" + "\r\n"
+        + "Content-Length: " + std::to_string(0) + "\r\n\r\n"
+        + "\r\n";
+
+    return ret;
+}
+
+std::string response_delete(RequestParser &query)
+{
+    struct stat stats;
+
+    if (stat(query.path.c_str(), &stats) == 0)
+    {
+        return response_delete200(query);
+    }
+    else
+    {
+        return response404();
+    }
+}
+
 std::string response(RequestParser &query)
 {
     if (query.command == "GET")
         return response_get(query);
+    if (query.command == "DELETE")
+        return response_delete(query);
     return "";
 }
