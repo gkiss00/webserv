@@ -1,6 +1,5 @@
 #include <sstream>
-#include <ctime>
-#include <iostream>
+#include "date.hpp"
 
 // result: "Fri, 31 Dec 1999 23:59:59 GMT"
 
