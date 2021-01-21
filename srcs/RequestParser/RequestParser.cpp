@@ -31,6 +31,7 @@ void    RequestParser::parse(std::string request){
         this->command = this->get_next(token, initial_request_line_delimiter);
         // std::cout << "command = " << this->command << std::endl;
         this->path = this->get_next(token, initial_request_line_delimiter);
+        this->path.erase(0, 1);
         // std::cout << "path = " << this->path << std::endl;
         // std::cout << "token = " << token << std::endl;
         token.erase(0, 5);

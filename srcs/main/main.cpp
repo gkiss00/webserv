@@ -162,6 +162,11 @@ int     main(){
                         }
                         std::cout << "Body = " << request.body << std::endl;
 
+                        std::cout << "__________RESPONSE__________" << std::endl;
+
+                        std::cout << response(request);
+                        send_client_response(i, response(request));
+
                         //close the socket
                         close_client_socket(i);
                     }
