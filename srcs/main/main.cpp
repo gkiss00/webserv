@@ -109,19 +109,7 @@ void        close_client_socket(int client_socket){
 }
 
 //ENTRY POINT
-int     main(int argc, char **argv){
-    argv = NULL;
-    std::cout << argc << std::endl;
-
-    RequestParser   request("GET /path/to/file/index.html HTTP/1.0\r\nHeader1: some-long-value-1a, some-long-value-1b\r\nHEADER1:       some-long-value-1a,\r\n\t\t some-long-value-1b\r\n\r\nbody");
-    // std::cout << "Command = " << request.command << std::endl;
-    // std::cout << "Path = " << request.path << std::endl;
-    // std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
-    // for(std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
-    //     std::cout << "Headers = " << it->first << " : " << it->second << std::endl;
-    // }
-    // std::cout << "Body = " << request.body;
-
+int     main(){
     fd_set  copy;
     int     socket_count;
     //read the config file
@@ -135,11 +123,11 @@ int     main(int argc, char **argv){
     //configure fd_set
     FD_ZERO(&current_sockets);
     for (unsigned int i = 0; i < server_sockets.size(); ++i){
-        FD_SET(server_sockets.at(i), &current_sockets);
+        FD_SET(server_sockets[i], &current_sockets);
     }
     //start listening
     for (unsigned int i = 0; i < server_sockets.size(); ++i){
-        listen(server_sockets.at(i), 0);
+        listen(server_sockets[i], 0);
     }
     //start server
     while(true){
@@ -162,8 +150,18 @@ int     main(int argc, char **argv){
                     }else{
                         std::cout << "new request" << std::endl;
                         //read
-                        std::string request = get_client_request(i);
+                        std::string tmp_request = get_client_request(i);
                         //write
+
+                        RequestParser   request(tmp_request);
+                        std::cout << "Command = " << request.command << std::endl;
+                        std::cout << "Path = " << request.path << std::endl;
+                        std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
+                        for(std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
+                            std::cout << "Headers = " << it->first << " : " << it->second << std::endl;
+                        }
+                        std::cout << "Body = " << request.body << std::endl;
+
                         //close the socket
                         close_client_socket(i);
                     }
@@ -172,7 +170,7 @@ int     main(int argc, char **argv){
         }
     }
     for (unsigned int i = 0; i < server_sockets.size(); ++i){
-        close(server_sockets.at(i));
+        close(server_sockets[i]);
     }
     return (EXIT_SUCCESS);
 }
