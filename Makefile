@@ -1,11 +1,11 @@
 SRCS =	srcs/main/main.cpp \
-		srcs/RequestParser/RequestParser.cpp \
+		srcs/requestParser/RequestParser.cpp \
 		srcs/data/status_codes.cpp \
 		srcs/tools/date.cpp \
 		srcs/tools/file_to_string.cpp \
 		srcs/tools/split.cpp \
 		srcs/tools/trim.cpp \
-		srcs/Response/Response.cpp \
+		srcs/response/Response.cpp \
 		srcs/Response/ResponseHeader.cpp \
 		srcs/configFileReader/Server.cpp \
 		srcs/configFileReader/ConfigFileReader.cpp \
