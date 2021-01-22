@@ -71,7 +71,6 @@ Server ConfigFileReader::getServer(std::vector<std::string> lines, unsigned int 
             }else if (args[0].compare("error_page") == 0){
                 server.error_pages.insert(std::pair<int, std::string>(std::stoi(args[1]), trim(args[2], ";")));
             }else if (args[0].compare("}") == 0){
-                ++*i;
                 break;
             }else{
                 
