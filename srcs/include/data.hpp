@@ -4,5 +4,6 @@
 # include <string>
 
 std::map<int,std::string> statusCodes();
+std::map<std::string,std::string> fileExtension();
 
 #endif
