@@ -3,7 +3,16 @@
 //GLOBAL VARS
 fd_set              current_sockets; //list of all sockets
 std::vector<int>    server_sockets; //list of all server sockets
+std::vector<Server> servers;
 int                 max;
+
+void    get_server_list(){
+    ConfigFileReader cfr;
+    servers = cfr.readFile(CONFIG_FILE_PTAH);
+    for (unsigned int i = 0; i < servers.size(); ++i){
+        servers.at(i).print();
+    }
+}
 
 //CONFIGURE NON BLOCKING
 int     configure_non_bloking(int fd){
@@ -125,6 +134,7 @@ int     main(){
 
     signal(SIGINT, signal_handler); 
     //read the config file
+    get_server_list();
     //get all serverSocket
     server_sockets.push_back(init_server_socket("127.0.0.1", 5000)); // test
     if (server_sockets.back() == -1){

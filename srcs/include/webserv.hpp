@@ -1,5 +1,3 @@
-
-
 #ifndef WEBSERV_HPP
 # define WEBSERV_HPP
 
@@ -33,9 +31,11 @@
 # include <sstream>
 
 # include "../RequestParser/RequestParser.hpp"
-# include "../Response/Response.hpp"
+# include "../response/Response.hpp"
 # include "tools.hpp"
 # include "data.hpp"
+# include "../configFileReader/ConfigFileReader.hpp"
+
 
 using std::string;
 

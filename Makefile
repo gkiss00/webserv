@@ -6,6 +6,8 @@ SRCS =	srcs/main/main.cpp \
 		srcs/tools/split.cpp \
 		srcs/tools/trim.cpp \
 		srcs/response/response.cpp \
+		srcs/configFileReader/Server.cpp \
+		srcs/configFileReader/ConfigFileReader.cpp \
 
 OBJS = ${SRCS:.cpp=.o}
 
