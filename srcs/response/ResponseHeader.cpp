@@ -1,7 +1,7 @@
 #include "ResponseHeader.hpp"
 
 ResponseHeader::ResponseHeader() {
-    content["Allow"] = "GET DELETE HEAD";
+    content["Allow"] = "GET, DELETE, HEAD";
     content["Content-Language"] = "fr, en";
     content["Content-Length"] = "";
     content["Content-Location"] = "";
@@ -32,7 +32,7 @@ std::string ResponseHeader::toString() {
     {
         if ((*it).second == "")
             continue ;
-        str += ((*it).first + " : " + (*it).second + "\n");
+        str += ((*it).first + ": " + (*it).second + "\n");
     }
     return str;
 }

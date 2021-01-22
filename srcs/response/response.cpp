@@ -1,12 +1,7 @@
 #include "Response.hpp"
 
 Response::Response(RequestParser &query)
-: query(query),
-header(),
-error_pages("srcs/pages/error_page/"),
-status(0),
-content(string())
-{}
+: query(query), error_pages("srcs/pages/error_page/") {};
 
 Response::~Response() {}
 
@@ -57,6 +52,6 @@ string Response::render() {
     parse();
 
     return string("HTTP/1.1 ") + std::to_string(status) + " " + statusCodes()[status] + "\n"
-        + header.toString()
+        + header.toString() + "\n"
         + content + "\r\n";
 }

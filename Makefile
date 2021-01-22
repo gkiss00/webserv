@@ -34,4 +34,7 @@ fclean: clean
 
 re: fclean all
 
+run: ${NAME}
+	./${NAME}
+
 .PHONY: all clean flcean re
