@@ -5,7 +5,8 @@ SRCS =	srcs/main/main.cpp \
 		srcs/tools/file_to_string.cpp \
 		srcs/tools/split.cpp \
 		srcs/tools/trim.cpp \
-		srcs/response/response.cpp \
+		srcs/Response/Response.cpp \
+		srcs/Response/ResponseHeader.cpp \
 		srcs/configFileReader/Server.cpp \
 		srcs/configFileReader/ConfigFileReader.cpp \
 
@@ -32,5 +33,8 @@ fclean: clean
 	${DELETE} ${NAME}
 
 re: fclean all
+
+run: ${NAME}
+	./${NAME}
 
 .PHONY: all clean flcean re
