@@ -38,6 +38,7 @@ void        Response::getFile() {
     header.addHeader("Content-Type", "text/html");
     header.addHeader("Last-Modified", string_date(gmtime(&stats.st_ctime)));
     header.addHeader("Content-Location", query.path);
+    header.addHeader("Content-Type", fileExtension()[query.path.substr(query.path.find_last_of(".") + 1)]);
 }
 
 void        Response::parse() {
