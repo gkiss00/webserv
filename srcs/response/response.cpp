@@ -15,6 +15,7 @@ void        Response::getStatus() {
     else
     {
         status = 404;
+        query.path = error_pages + std::to_string(status) + ".html";
     }
 }
 
@@ -29,15 +30,18 @@ void        Response::moveFile()
 }
 
 void        Response::getFile() {
-    (status / 100 == 2)
-    ? content = file_to_string(query.path)
-    : content = file_to_string(error_pages + std::to_string(status) + ".html");
+    struct stat stats;
+
+    content = file_to_string(query.path);
+    stat(query.path.c_str(), &stats);
     header.addHeader("Content-Length", std::to_string(content.size()));
     header.addHeader("Content-Type", "text/html");
+    header.addHeader("Last-Modified", string_date(gmtime(&stats.st_ctime)));
+    header.addHeader("Content-Location", query.path);
 }
 
 void        Response::parse() {
-    if (query.command == "GET") {
+    if (query.command == "GET" || query.command == "HEAD") {
         getStatus();
         getFile();
     } else if (query.command == "DELETE") {
@@ -53,5 +57,5 @@ string Response::render() {
 
     return string("HTTP/1.1 ") + std::to_string(status) + " " + statusCodes()[status] + "\n"
         + header.toString() + "\n"
-        + content + "\r\n";
+        + ((query.command == "GET") ? content : "") + "\r\n";
 }

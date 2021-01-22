@@ -4,13 +4,19 @@
 // result: "Fri, 31 Dec 1999 23:59:59 GMT"
 
 std::string string_date() {
-    char        buf[64];
     std::time_t t = std::time(0);
     std::tm *   now = std::localtime(&t);
-    
-    strftime (buf, 64, "%a, %d %b %Y %T GMT", now);
+
+    return string_date(now);
+}
+
+std::string string_date(std::tm*  time) {
+    char        buf[64];
+
+    strftime (buf, 64, "%a, %d %b %Y %T GMT", time);
     return std::string(buf);
 }
+
 
 // from "Fri, 31 Dec 1999 23:59:59 GMT" to struct tm
 

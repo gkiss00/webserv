@@ -30,12 +30,11 @@
 # include <fstream>
 # include <sstream>
 
-# include "../RequestParser/RequestParser.hpp"
-# include "../Response/Response.hpp"
+# include "../requestParser/RequestParser.hpp"
+# include "../response/Response.hpp"
 # include "tools.hpp"
 # include "data.hpp"
 # include "../configFileReader/ConfigFileReader.hpp"
-
 
 using std::string;
 

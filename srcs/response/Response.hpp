@@ -24,7 +24,7 @@ class Response
     private:
     RequestParser       &query;
     ResponseHeader      header;
-    std::string         error_pages;
+    const std::string   error_pages;
     int                 status;
     std::string         content;
 };

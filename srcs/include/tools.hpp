@@ -5,6 +5,7 @@
 
 // DATE
 std::string string_date();
+std::string string_date(std::tm*  time);
 std::tm* tm_date(const char* format_time);
 
 // FILE_TO_STRING
