@@ -1,7 +1,7 @@
 #include "Response.hpp"
 
-Response::Response(RequestParser &query)
-: query(query), error_pages("srcs/pages/error_page/") {};
+Response::Response(RequestParser &query, Server &server)
+: query(query), server(server) {};
 
 Response::~Response() {}
 
@@ -15,7 +15,7 @@ void        Response::getStatus() {
     else
     {
         status = 404;
-        query.path = error_pages + std::to_string(status) + ".html";
+        query.path = server.error_pages[status];
     }
 }
 

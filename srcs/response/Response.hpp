@@ -4,13 +4,14 @@
 # include "ResponseHeader.hpp"
 # include "webserv.hpp"
 
+class Server;
 class RequestParser;
 class ResponseHeader;
 
 class Response
 {
     public:
-    Response(RequestParser &query);
+    Response(RequestParser &query, Server &server);
     ~Response();
 
     void parse();
@@ -23,8 +24,8 @@ class Response
 
     private:
     RequestParser       &query;
+    Server              &server;
     ResponseHeader      header;
-    const std::string   error_pages;
     int                 status;
     std::string         content;
 };

@@ -184,7 +184,7 @@ int     main(){
 
                         //write
                         std::cout << "__________RESPONSE__________" << std::endl;
-                        Response response(request);
+                        Response response(request, servers[0]); // need to take care of all servers
                         send_client_response(i, response.render());
 
                         //close the socket
