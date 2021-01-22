@@ -2,10 +2,10 @@
 
 Response::Response(RequestParser &query)
 : query(query),
+header(),
 error_pages("srcs/pages/error_page/"),
 status(0),
-content(string()),
-content_type("text/html")
+content(string())
 {}
 
 Response::~Response() {}
@@ -37,6 +37,8 @@ void        Response::getFile() {
     (status / 100 == 2)
     ? content = file_to_string(query.path)
     : content = file_to_string(error_pages + std::to_string(status) + ".html");
+    header.addHeader("Content-Length", std::to_string(content.size()));
+    header.addHeader("Content-Type", "text/html");
 }
 
 void        Response::parse() {
@@ -55,8 +57,6 @@ string Response::render() {
     parse();
 
     return string("HTTP/1.1 ") + std::to_string(status) + " " + statusCodes()[status] + "\n"
-        + string("Date: ") + string_date() + "\n"
-        + string("Content-Type: ") + content_type + "\n"
-        + string("Content-Length: ") + std::to_string(content.size()) + "\n\n"
+        + header.toString()
         + content + "\r\n";
 }

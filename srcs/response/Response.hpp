@@ -1,9 +1,11 @@
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 
-#include "webserv.hpp"
+# include "ResponseHeader.hpp"
+# include "webserv.hpp"
 
 class RequestParser;
+class ResponseHeader;
 
 class Response
 {
@@ -21,10 +23,10 @@ class Response
 
     private:
     RequestParser       &query;
+    ResponseHeader      header;
     const std::string   error_pages;
     int                 status;
     std::string         content;
-    std::string         content_type;
 };
 
 #endif
