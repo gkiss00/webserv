@@ -13,5 +13,6 @@ std::string file_to_string(std::string path);
 // STRING UTILS
 std::vector<std::string> split(std::string s, std::string delimiter);
 std::string trim(std::string str);
+std::string trim(std::string str, std::string tr)
 
 #endif
