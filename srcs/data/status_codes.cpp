@@ -4,7 +4,6 @@ std::map<int,std::string> statusCodes()
 {
     std::map<int,std::string> status;
 
-    status[400] = "Not Found";
     status[100] = "Continue";
     status[101] = "Switching Protocols";
     status[200] = "OK";

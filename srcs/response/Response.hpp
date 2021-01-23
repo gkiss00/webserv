@@ -19,6 +19,7 @@ class Response
     void getStatus();
     void getFile();
     void moveFile();
+    void setAllowedMethods();
 
     std::string render();
 

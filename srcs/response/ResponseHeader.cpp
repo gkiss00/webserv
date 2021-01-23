@@ -1,8 +1,8 @@
 #include "ResponseHeader.hpp"
 
 ResponseHeader::ResponseHeader() {
-    content["Allow"] = "GET, DELETE, HEAD";
-    content["Content-Language"] = "fr, en";
+    content["Allow"] = "";
+    content["Content-Language"] = "fr, en"; // I DONT KNOW
     content["Content-Length"] = "";
     content["Content-Location"] = "";
     content["Content-Type"] = "";
