@@ -18,6 +18,7 @@ class Server {
         bool autoindex;
         std::string default_file;
         std::vector<std::string> metavariables;
+        std::vector<int> client_sockets;
 
         void print();
 };

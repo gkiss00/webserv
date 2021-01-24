@@ -4,13 +4,14 @@
 # include "ResponseHeader.hpp"
 # include "webserv.hpp"
 
+class Server;
 class RequestParser;
 class ResponseHeader;
 
 class Response
 {
     public:
-    Response(RequestParser &query);
+    Response(RequestParser &query, Server &server);
     ~Response();
 
     void parse();
@@ -19,13 +20,14 @@ class Response
     void getFile();
     void moveFile();
     void execCGI();
+    void setAllowedMethods();
 
     std::string render();
 
     private:
     RequestParser       &query;
+    Server              &server;
     ResponseHeader      header;
-    const std::string   error_pages;
     int                 status;
     std::string         content;
 };

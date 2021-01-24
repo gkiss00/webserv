@@ -2,7 +2,6 @@
 
 //GLOBAL VARS
 fd_set              current_sockets; //list of all sockets
-std::vector<int>    server_sockets; //list of all server sockets
 std::vector<Server> servers;
 int                 max;
 
@@ -56,8 +55,8 @@ int     init_server_socket(std::string host, int port)
 
 //IS THE SOCKET PART FROM THE SERVER SOCKET
 bool    isServerSocket(int fd){
-    for (unsigned int i = 0; i < server_sockets.size(); ++i){
-        if (fd == server_sockets.at(i))
+    for (unsigned int i = 0; i < servers.size(); ++i){
+        if (fd == servers.at(i).socket)
             return (true);
     }
     return (false);
@@ -84,6 +83,7 @@ int     add_new_client(int server_socket)
 {
     int client_socket;
 
+    //get the new connexion
     if ((client_socket = accept_new_connexion(server_socket)) == -1)
     {
         std::cout << "Could not add a new client." << std::endl;
@@ -93,6 +93,11 @@ int     add_new_client(int server_socket)
     FD_SET(client_socket, &current_sockets);
     if(client_socket > max)
         max = client_socket + 1;
+    //add the client to the good server
+    for (unsigned int i = 0; i < servers.size(); ++i){
+        if (servers.at(i).socket == server_socket)
+            servers.at(i).client_sockets.push_back(client_socket);
+    }
     return (client_socket);
 }
 
@@ -127,10 +132,20 @@ void signal_handler(int signal){
     std::cout << "Caught signal: " << signal << std::endl;
     std::cout << "Exiting..." << std::endl;
     FD_ZERO(&current_sockets);
-    for (unsigned int i = 0; i < server_sockets.size(); ++i){
-        close(server_sockets[i]);
+    for (unsigned int i = 0; i < servers.size(); ++i){
+        close(servers.at(i).socket);
     }
     exit(-1);
+}
+
+void    set_server_sockets(){
+    for (unsigned int i = 0; i < servers.size(); ++i){
+        servers.at(i).socket = init_server_socket("127.0.0.1", servers.at(i).listen);
+        if(servers.at(i).socket == -1){
+            std::cout << "Error while init server socket" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
 }
 
 //ENTRY POINT
@@ -141,21 +156,18 @@ int     main(){
     signal(SIGINT, signal_handler); 
     //read the config file
     get_server_list();
-    //get all serverSocket
-    server_sockets.push_back(init_server_socket("127.0.0.1", 5000)); // test
-    if (server_sockets.back() == -1){
-        return (EXIT_FAILURE);
-    }
+    //set all serverSocket
+    set_server_sockets();
     //configure max
-    max = server_sockets.back() + 1;
+    max = servers.back().socket + 1;
     //configure fd_set
     FD_ZERO(&current_sockets);
-    for (unsigned int i = 0; i < server_sockets.size(); ++i){
-        FD_SET(server_sockets[i], &current_sockets);
+    for (unsigned int i = 0; i < servers.size(); ++i){
+        FD_SET(servers.at(i).socket, &current_sockets);
     }
     //start listening
-    for (unsigned int i = 0; i < server_sockets.size(); ++i){
-        listen(server_sockets[i], 0);
+    for (unsigned int i = 0; i < servers.size(); ++i){
+        listen(servers.at(i).socket, 0);
     }
     //start server
     while(true){
@@ -190,8 +202,7 @@ int     main(){
 
                         //write
                         std::cout << "__________RESPONSE__________" << std::endl;
-                        Response response(request);
-                        // std::cout << response.render();
+                        Response response(request, servers[0]); // need to take care of all servers
                         send_client_response(i, response.render());
 
                         //close the socket
@@ -200,9 +211,6 @@ int     main(){
                 }
             }
         }
-    }
-    for (unsigned int i = 0; i < server_sockets.size(); ++i){
-        close(server_sockets[i]);
     }
     return (EXIT_SUCCESS);
 }

@@ -1,7 +1,9 @@
 #include "Response.hpp"
 
-Response::Response(RequestParser &query)
-: query(query), error_pages("srcs/pages/error_page/") {};
+Response::Response(RequestParser &query, Server &server)
+: query(query), server(server) {
+    setAllowedMethods();
+}
 
 Response::~Response() {}
 
@@ -15,8 +17,18 @@ void        Response::getStatus() {
     else
     {
         status = 404;
-        query.path = error_pages + std::to_string(status) + ".html";
+        query.path = server.error_pages[status];
     }
+}
+
+void        Response::setAllowedMethods() {
+    std::string allowed;
+    for (unsigned int i = 0; i < server.methodes.size(); ++i){
+        allowed += server.methodes.at(i);
+        if (i != server.methodes.size() - 1)
+            allowed += ", ";
+    }
+    header.addHeader("Allowed-Methods", allowed);
 }
 
 void        Response::moveFile()
@@ -38,6 +50,7 @@ void        Response::getFile() {
     header.addHeader("Content-Type", "text/html");
     header.addHeader("Last-Modified", string_date(gmtime(&stats.st_ctime)));
     header.addHeader("Content-Location", query.path);
+    header.addHeader("Content-Type", fileExtension()[query.path.substr(query.path.find_last_of(".") + 1)]);
 }
 
 void        Response::execCGI()
