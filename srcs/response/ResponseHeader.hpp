@@ -10,6 +10,7 @@ class ResponseHeader
     public:
     ResponseHeader();
     ~ResponseHeader();
+
     void addHeader(std::string key, std::string value);
     std::string toString();
 

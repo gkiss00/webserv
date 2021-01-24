@@ -1,7 +1,9 @@
 #include "Response.hpp"
 
 Response::Response(RequestParser &query, Server &server)
-: query(query), server(server) {};
+: query(query), server(server) {
+    setAllowedMethods();
+}
 
 Response::~Response() {}
 
@@ -17,6 +19,16 @@ void        Response::getStatus() {
         status = 404;
         query.path = server.error_pages[status];
     }
+}
+
+void        Response::setAllowedMethods() {
+    std::string allowed;
+    for (unsigned int i = 0; i < server.methodes.size(); ++i){
+        allowed += server.methodes.at(i);
+        if (i != server.methodes.size() - 1)
+            allowed += ", ";
+    }
+    header.addHeader("Allowed-Methods", allowed);
 }
 
 void        Response::moveFile()
@@ -58,5 +70,5 @@ string Response::render() {
 
     return string("HTTP/1.1 ") + std::to_string(status) + " " + statusCodes()[status] + "\n"
         + header.toString() + "\n"
-        + ((query.command == "GET") ? content : "") + "\r\n";
+        + ((query.command == "HEAD") ? "" : content) + "\r\n";
 }
