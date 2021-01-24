@@ -98,13 +98,19 @@ int     add_new_client(int server_socket)
 
 //GET THE REQUEST FROM THE CLIENT
 std::string     get_client_request(int client_socket){
-    char    buf[1001];
-    int     ret;
+    std::string request;
+    char        buf[1001];
+    int         ret;
 
     ret = recv(client_socket, buf, 1000, 0);
     buf[ret] = '\0';
-    std::cout << buf << std::endl;
-    return (std::string(buf));
+    // std::cout << buf << std::endl;
+    request = buf;
+    usleep(1000);
+    ret = recv(client_socket, buf, 1000, 0);
+    buf[ret] = '\0';
+    request += buf;
+    return (request);
 }
 
 //SEND THE RESPONSE TO THE CLIENT
@@ -177,7 +183,7 @@ int     main(){
                         std::cout << "Command = " << request.command << std::endl;
                         std::cout << "Path = " << request.path << std::endl;
                         std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
-                        for(std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
+                        for (std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
                             std::cout << "Headers = " << it->first << " : " << it->second << std::endl;
                         }
                         std::cout << "Body = " << request.body << std::endl;
@@ -185,7 +191,7 @@ int     main(){
                         //write
                         std::cout << "__________RESPONSE__________" << std::endl;
                         Response response(request);
-                        std::cout << response.render();
+                        // std::cout << response.render();
                         send_client_response(i, response.render());
 
                         //close the socket

@@ -18,6 +18,7 @@ class Response
     void getStatus();
     void getFile();
     void moveFile();
+    void execCGI();
 
     std::string render();
 

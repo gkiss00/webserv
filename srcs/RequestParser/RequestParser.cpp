@@ -2,6 +2,7 @@
 
 RequestParser::RequestParser(std::string request)
 {
+    this->full_request = request.c_str();
     this->parse(request);
 }
 
@@ -25,6 +26,9 @@ void    RequestParser::parse(std::string request){
     std::string delimiter("\r\n"), initial_request_line_delimiter(" "), headers_delimiter(":");
     std::string token, key, last_key;
 
+    // std::cout << "---------------------------------" << std::endl;
+    // std::cout << request << std::endl;
+    // std::cout << "---------------------------------" << std::endl;
     try{
         token = this->get_next(request, delimiter);
         // std::cout << "token = " << token << std::endl;
