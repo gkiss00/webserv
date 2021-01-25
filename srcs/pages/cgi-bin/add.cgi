@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-
 import cgi, cgitb
 cgitb.enable()
 
-input_data = cgi.FieldStorage(environ={'REQUEST_METHOD':'POST'})
+input_data = cgi.FieldStorage()
 
 print('Content-Type: text/html') # HTML is following
 print('')                         # Leave a blank line

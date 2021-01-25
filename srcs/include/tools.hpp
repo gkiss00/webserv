@@ -16,4 +16,7 @@ std::vector<std::string> split(std::string s, std::string delimiter);
 std::string trim(std::string str);
 std::string trim(std::string str, std::string tr);
 
+// POST UTILS
+char    **get_child_env(std::string &query_string);
+
 #endif

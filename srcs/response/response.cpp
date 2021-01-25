@@ -73,9 +73,17 @@ void        Response::execCGI()
             dup2(fd[0], STDIN_FILENO);
             dup2(fd_write_from_child[1], STDOUT_FILENO);
 
-            setenv("REQUEST_METHOD", "POST", 1);
-            setenv("QUERY_STRING", this->query.body.c_str(), 1);
-            execlp("./srcs/pages/cgi-bin/add.cgi", "./srcs/pages/cgi-bin/add.cgi", NULL); // we must use execve
+            char    arg1[] = "/Users/corentin/Documents/Programmation/19/webserv/srcs/pages/cgi-bin/add.cgi";
+            char    *args[2];
+            args[0] = arg1;
+            args[1] = NULL;
+
+            char env1[] = "REQUEST_METHOD=POST";
+            char *env[2];
+            env[0] = env1;
+            env[1] = NULL;
+
+            execve("/Users/corentin/Documents/Programmation/19/webserv/srcs/pages/cgi-bin/add.cgi", args, env);
             perror("execve failed: ");
             return ;
         } else {
