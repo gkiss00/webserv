@@ -73,7 +73,7 @@ void        Response::generateAutoindex()
     content += "\n<h1>Index of " + query.path + "</h1>\n";
     if ((dir = opendir(query.path.c_str())) != NULL)
     {
-        while ((ent = readdir (dir)) != NULL)
+        while ((ent = readdir(dir)) != NULL)
         {
             struct stat stats;
             std::string filename(ent->d_name);
