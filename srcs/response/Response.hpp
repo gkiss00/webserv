@@ -14,14 +14,27 @@ class Response
     Response(RequestParser &query, Server &server);
     ~Response();
 
-    void parse();
+    // utils
+    void    error(int status);
+    std::string statusLine(int status);
+    void    getFile();
+    void    moveFile();
+    void    execCGI();
+    void    setAllowedMethodsHeader();
+    // void    digestPath();
 
-    void getStatus();
-    void getFile();
-    void moveFile();
-    void execCGI();
-    void setAllowedMethods();
+    // commands
+    void    _get();
+    void    _head();
+    void    _post();
+    void    _put();
+    void    _delete();
+    void    _connect();
+    void    _options();
+    void    _trace();
+    void    _patch();
 
+    void    execute();
     std::string render();
 
     private:

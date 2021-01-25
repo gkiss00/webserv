@@ -192,6 +192,7 @@ int     main(){
 
                         //read
                         RequestParser   request(get_client_request(i));
+                        std::cout << "__________client_request__________" << std::endl;
                         std::cout << "Command = " << request.command << std::endl;
                         std::cout << "Path = " << request.path << std::endl;
                         std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
@@ -201,8 +202,9 @@ int     main(){
                         std::cout << "Body = " << request.body << std::endl;
 
                         //write
-                        std::cout << "__________RESPONSE__________" << std::endl;
-                        Response response(request, servers[0]); // need to take care of all servers
+                        std::cout << "__________server_print__________" << std::endl;
+                        servers[0].print();
+                        Response response(request, servers[0]); // need to take care of all servers, but for now we focus on the 5000
                         send_client_response(i, response.render());
 
                         //close the socket

@@ -1,27 +1,36 @@
 #include "Response.hpp"
 
+#define DIRECTORY_STATS 040000
+#define DEBUG 1
+
 Response::Response(RequestParser &query, Server &server)
 : query(query), server(server) {
-    setAllowedMethods();
+    setAllowedMethodsHeader();
+    chdir(server.root.c_str());
 }
 
 Response::~Response() {}
 
-void        Response::getStatus() {
-    struct stat stats;
+//  _   _  _____  ___  _      ____  
+// | | | ||_   _||_ _|| |    / ___| 
+// | | | |  | |   | | | |    \___ | 
+// | |_| |  | |   | | | |___  ___) |
+//  \___/   |_|  |___||_____||____/ 
+                                 
 
-    if (stat(query.path.c_str(), &stats) == 0)
-    {
-        status = 200;
-    }
-    else
-    {
-        status = 404;
-        query.path = server.error_pages[status];
-    }
+void        Response::error(int status) {
+    this->status = status;
+    query.path = server.error_pages[status];
+    getFile();
 }
 
-void        Response::setAllowedMethods() {
+std::string Response::statusLine(int status) {
+    std::string sl(string("HTTP/1.1 ") + std::to_string(status) + " " + statusCodes()[status] + "\n");
+    return sl;
+}
+
+// header update
+void        Response::setAllowedMethodsHeader() {
     std::string allowed;
     for (unsigned int i = 0; i < server.methodes.size(); ++i){
         allowed += server.methodes.at(i);
@@ -29,16 +38,6 @@ void        Response::setAllowedMethods() {
             allowed += ", ";
     }
     header.addHeader("Allowed-Methods", allowed);
-}
-
-void        Response::moveFile()
-{
-    if (status == 200) {
-        // move to bin folder when root will be
-        if (rename(this->query.path.c_str(), string(this->query.path + ".del").c_str()) != 0){
-            perror("File moving failed: ");
-        }
-    }
 }
 
 void        Response::getFile() {
@@ -51,6 +50,146 @@ void        Response::getFile() {
     header.addHeader("Last-Modified", string_date(gmtime(&stats.st_ctime)));
     header.addHeader("Content-Location", query.path);
     header.addHeader("Content-Type", fileExtension()[query.path.substr(query.path.find_last_of(".") + 1)]);
+}
+
+//  __  __  _____  _____  _   _   ___   ____   ____  
+// |  \/  || ____||_   _|| | | | / _ \ |  _ \ / ___| 
+// | |\/| ||  _|    | |  | |_| || | | || | | |\___ | 
+// | |  | || |___   | |  |  _  || |_| || |_| | ___) |
+// |_|  |_||_____|  |_|  |_| |_| \___/ |____/ |____/ 
+//                                                   
+
+//               _   
+//   __ _   ___ | |_ 
+//  / _` | / _ \| __|
+// | (_| ||  __/| |_ 
+//  \__, | \___| \__|
+//  |___/            
+
+void        Response::_get() {
+    struct stat stats;
+    
+    if (stat(query.path.c_str(), &stats) == 0)
+    {
+        if (stats.st_mode & DIRECTORY_STATS)
+        {
+            std::cout << ">>" << query.path << "\n";
+            if (query.path[query.path.size() - 1] != '/')
+                query.path += "/";
+            if (server.default_file != "") {
+                query.path += server.default_file;
+                _get(); // maybe readdir for autoindex on?
+            }
+        }
+        status = 200;
+        getFile();
+    }
+    else
+    {
+        error(404);
+    }
+}
+
+//  _                       _ 
+// | |__    ___   __ _   __| |
+// | '_ \  / _ \ / _` | / _` |
+// | | | ||  __/| (_| || (_| |
+// |_| |_| \___| \__,_| \__,_|
+//                            
+
+void        Response::_head() {
+    _get();
+    content = "";
+}
+
+//                _   
+//  _ __   _   _ | |_ 
+// | '_ \ | | | || __|
+// | |_) || |_| || |_ 
+// | .__/  \__,_| \__|
+// |_|                
+
+void        Response::_put() {
+    
+}
+
+//                                        _   
+//   ___  ___   _ __   _ __    ___   ___ | |_ 
+//  / __|/ _ \ | '_ \ | '_ \  / _ \ / __|| __|
+// | (__| (_) || | | || | | ||  __/| (__ | |_ 
+//  \___|\___/ |_| |_||_| |_| \___| \___| \__|
+//                                            
+
+void        Response::_connect() {
+    
+}
+
+//                _    _                    
+//   ___   _ __  | |_ (_)  ___   _ __   ___ 
+//  / _ \ | '_ \ | __|| | / _ \ | '_ \ / __|
+// | (_) || |_) || |_ | || (_) || | | |\__ \
+//  \___/ | .__/  \__||_| \___/ |_| |_||___/
+//        |_|                               
+
+void        Response::_options() {
+    
+}
+
+//  _                          
+// | |_  _ __  __ _   ___  ___ 
+// | __|| '__|/ _` | / __|/ _ \
+// | |_ | |  | (_| || (__|  __/
+//  \__||_|   \__,_| \___|\___|
+//                             
+
+void        Response::_trace() {
+    
+}
+
+//                _         _     
+//  _ __    __ _ | |_  ___ | |__  
+// | '_ \  / _` || __|/ __|| '_ \ 
+// | |_) || (_| || |_| (__ | | | |
+// | .__/  \__,_| \__|\___||_| |_|
+// |_|                            
+
+void        Response::_patch() {
+    
+}
+
+//      _        _        _        
+//   __| |  ___ | |  ___ | |_  ___ 
+//  / _` | / _ \| | / _ \| __|/ _ \
+// | (_| ||  __/| ||  __/| |_|  __/
+//  \__,_| \___||_| \___| \__|\___|
+//                                 
+
+void        Response::_delete() {
+    _get();
+    moveFile();
+    content = "";
+}
+
+void        Response::moveFile()
+{
+    if (status == 200) {
+        // move to bin folder when root will be
+        if (rename(this->query.path.c_str(), string(this->query.path + ".del").c_str()) != 0){
+            perror("File moving failed: ");
+        }
+    }
+}
+
+//                     _   
+//  _ __    ___   ___ | |_ 
+// | '_ \  / _ \ / __|| __|
+// | |_) || (_) |\__ \| |_ 
+// | .__/  \___/ |___/ \__|
+// |_|                     
+
+void        Response::_post() {
+    status = 200;
+    this->execCGI();
 }
 
 void        Response::execCGI()
@@ -106,39 +245,61 @@ void        Response::execCGI()
     }
 }
 
-void        Response::parse() {
-    if (query.command == "GET" || query.command == "HEAD") {
-        getStatus();
-        getFile();
-    } else if (query.command == "DELETE") {
-        this->getStatus();
-        this->moveFile();
-        this->content = "";
+//  ____   _____  _   _  ____   _____  ____  
+// |  _ \ | ____|| \ | ||  _ \ | ____||  _ | 
+// | |_) ||  _|  |  \| || | | ||  _|  | |_) |
+// |  _ < | |___ | |\  || |_| || |___ |  _ < 
+// |_| \_\|_____||_| \_||____/ |_____||_| |_|
+//                                           
+
+//
+// Below are the main functions. These functions can call particular commands
+// depending on the query.command. They can also call error(status_code) at any
+// time.
+// 3 fields are to be filled: status, header, content.
+//
+
+void        Response::execute() {
+    if (query.command == "GET") {
+        this->_get();
+    } else if (query.command == "HEAD") {
+        this->_head();
     } else if (query.command == "POST") {
-        // this->getStatus();
-        this->status = 200;
-        this->execCGI();
-    } else {
-        this->status = 405; // 501 ?
-        this->content = "";
-    }
+        this->_post();
+    } else if (query.command == "PUT") {
+        this->_put();
+    } else if (query.command == "DELETE") {
+        this->_delete();
+    } else if (query.command == "CONNECT") {
+        this->_connect();
+    } else if (query.command == "OPTIONS") {
+        this->_options();
+    } else if (query.command == "TRACE") {
+        this->_trace();
+    } else if (query.command == "PATCH") {
+        this->_patch();
+    } 
 }
 
 string Response::render() {
+    std::vector<std::string> allImplementedMethods = implementedMethods();
 
-    parse();
+    if (!std::count(allImplementedMethods.begin(), allImplementedMethods.end(), query.command))
+        error(501); // not implemented
 
-    std::string response(string("HTTP/1.1 ") + std::to_string(status) + " " + statusCodes()[status] + "\n"
-        + header.toString());
+    else if (!std::count(server.methodes.begin(), server.methodes.end(), query.command))
+        error(405); // not authorized
 
-    if (this->query.command != "POST"){
-        response += "\n" + content + "\r\n";
-    }else{
-        response += content + "\r\n";
-    }
+    else
+        execute();
 
-    std::cout << "------------- Response final -------------" << std::endl;
+    std::string response(statusLine(status) + header.toString() + "\r\n" + content + "\r\n");
+
+#ifdef DEBUG
+    std::cout << "_____RESPONSE_____" << std::endl;
     std::cout << response;
-    std::cout << "-------------                -------------" << std::endl;
+    std::cout << "_____        _____" << std::endl;
+#endif
+
     return response;
 }
