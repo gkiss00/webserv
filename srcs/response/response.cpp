@@ -43,10 +43,9 @@ void        Response::setAllowedMethodsHeader() {
 void        Response::getFile() {
     struct stat stats;
 
-    content = file_to_string(query.path);
+    content = "\n" + file_to_string(query.path);
     stat(query.path.c_str(), &stats);
     header.addHeader("Content-Length", std::to_string(content.size()));
-    header.addHeader("Content-Type", "text/html");
     header.addHeader("Last-Modified", string_date(gmtime(&stats.st_ctime)));
     header.addHeader("Content-Location", query.path);
     header.addHeader("Content-Type", fileExtension()[query.path.substr(query.path.find_last_of(".") + 1)]);
@@ -66,19 +65,50 @@ void        Response::getFile() {
 //  \__, | \___| \__|
 //  |___/            
 
+void        Response::generateAutoindex()
+{
+    DIR *dir;
+    struct dirent *ent;
+
+    content += "\n<h1>Index of " + query.path + "</h1>\n";
+    if ((dir = opendir(query.path.c_str())) != NULL)
+    {
+        while ((ent = readdir (dir)) != NULL)
+        {
+            struct stat stats;
+            std::string filename(ent->d_name);
+
+            content += "<p><a href=\"/" + query.path + std::string(filename) + "\">" + filename + "</a>\n<date style=\"color:red\">";
+            stat(filename.c_str(), &stats);
+            content += string_date(gmtime(&stats.st_ctime)) + "</date>\n";
+            content += fileExtension()[filename.substr(filename.find_last_of(".") + 1)];
+            content += "<p>\n";
+        }
+        closedir (dir);
+    }
+    header.addHeader("Content-Length", std::to_string(content.size()));
+}
+
 void        Response::_get() {
     struct stat stats;
-    
+
+    if (query.path == "")
+        query.path = ".";
     if (stat(query.path.c_str(), &stats) == 0)
     {
         if (stats.st_mode & DIRECTORY_STATS)
         {
-            std::cout << ">>" << query.path << "\n";
             if (query.path[query.path.size() - 1] != '/')
                 query.path += "/";
+            if (server.autoindex)
+            {
+                generateAutoindex();
+                status = 200;
+                return ;
+            }
             if (server.default_file != "") {
                 query.path += server.default_file;
-                _get(); // maybe readdir for autoindex on?
+                _get();
             }
         }
         status = 200;
@@ -293,7 +323,7 @@ string Response::render() {
     else
         execute();
 
-    std::string response(statusLine(status) + header.toString() + "\r\n" + content + "\r\n");
+    std::string response(statusLine(status) + header.toString() + content + "\r\n");
 
 #ifdef DEBUG
     std::cout << "_____RESPONSE_____" << std::endl;

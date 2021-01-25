@@ -4,7 +4,7 @@ SRCS =	srcs/main/main.cpp \
 		srcs/data/implemented_methods.cpp \
 		srcs/data/file_extensions.cpp \
 		srcs/tools/date.cpp \
-		srcs/tools/file_to_string.cpp \
+		srcs/tools/files.cpp \
 		srcs/tools/split.cpp \
 		srcs/tools/trim.cpp \
 		srcs/response/response.cpp \
