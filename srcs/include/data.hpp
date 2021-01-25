@@ -5,5 +5,6 @@
 
 std::map<int,std::string> statusCodes();
 std::map<std::string,std::string> fileExtension();
+std::vector<std::string> implementedMethods();
 
 #endif
