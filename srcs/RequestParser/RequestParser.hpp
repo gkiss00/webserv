@@ -11,6 +11,7 @@ class RequestParser
     RequestParser(std::string request);
     ~RequestParser();
 
+    std::string full_request;
     std::string command;
     std::string path;
     double      HTTP_version;

@@ -17,6 +17,7 @@
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
+# include <dirent.h>
 
 # include <iostream>
 # include <vector>
@@ -26,6 +27,7 @@
 # include <map>
 # include <algorithm>
 
+// illégal ?
 # include <iomanip>
 # include <fstream>
 # include <sstream>

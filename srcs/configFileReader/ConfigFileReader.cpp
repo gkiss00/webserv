@@ -53,7 +53,7 @@ Server ConfigFileReader::getServer(std::vector<std::string> lines, unsigned int 
             }else if (args[0].compare("root") == 0){
                 server.root = trim(args[1], ";");
             }else if (args[0].compare("autoindex") == 0){
-                server.autoindex = (args[1].compare("on") == 0);
+                server.autoindex = (trim(args[1], ";").compare("on") == 0);
             }else if (args[0].compare("methods") == 0){
                 ++*i;
                 args = split(lines.at(*i), " ");
