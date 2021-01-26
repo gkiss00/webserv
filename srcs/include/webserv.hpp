@@ -27,11 +27,6 @@
 # include <map>
 # include <algorithm>
 
-// illégal ?
-# include <iomanip>
-# include <fstream>
-# include <sstream>
-
 # include "../requestParser/RequestParser.hpp"
 # include "../response/Response.hpp"
 # include "tools.hpp"

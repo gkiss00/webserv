@@ -1,13 +1,13 @@
 mkdir -p /tmp/www/YoupiBanane
-touch /tmp/www/YoupiBanane/youpi.bad_extension
-touch /tmp/www/YoupiBanane/youpi.bla
+echo youpi.bad_extension > /tmp/www/YoupiBanane/youpi.bad_extension
+echo youpi.bla > /tmp/www/YoupiBanane/youpi.bla
 
 mkdir -p /tmp/www/YoupiBanane/nop
-touch /tmp/www/YoupiBanane/nop/youpi.bad_extension
-touch /tmp/www/YoupiBanane/nop/other.pouic
+echo youpi.bad_extension > /tmp/www/YoupiBanane/nop/youpi.bad_extension
+echo other.pouic > /tmp/www/YoupiBanane/nop/other.pouic
 
 mkdir -p /tmp/www/YoupiBanane/Yeah
-touch /tmp/www/YoupiBanane/Yeah/not_happy.bad_extension
+echo not_happy.bad_extension > /tmp/www/YoupiBanane/Yeah/not_happy.bad_extension
 
 cp -R srcs/pages /tmp/pages
 

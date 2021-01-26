@@ -70,7 +70,8 @@ void        Response::generateAutoindex()
     DIR *dir;
     struct dirent *ent;
 
-    content += "\n<h1>Index of " + query.path + "</h1>\n";
+    content += "\n<html>\n<head><title>Index of " + trim(query.path, ".") + "</title></head>\n<body>\n";
+    content += "<h1>Index of " + trim(query.path, ".") + "</h1><hr><pre>\n";
     if ((dir = opendir(query.path.c_str())) != NULL)
     {
         while ((ent = readdir(dir)) != NULL)
@@ -78,14 +79,17 @@ void        Response::generateAutoindex()
             struct stat stats;
             std::string filename(ent->d_name);
 
-            content += "<p><a href=\"/" + query.path + std::string(filename) + "\">" + filename + "</a>\n<date style=\"color:red\">";
+            content += "<a href=\"/" + query.path + std::string(filename) + "\">" + filename + "</a>";
+            for (size_t i = 0; i < 50 - filename.size(); i++)
+                content += ' ';
             stat(filename.c_str(), &stats);
-            content += string_date(gmtime(&stats.st_ctime)) + "</date>\n";
+            content += string_date(gmtime(&stats.st_ctime));
             content += fileExtension()[filename.substr(filename.find_last_of(".") + 1)];
-            content += "<p>\n";
+            content += "\n";
         }
         closedir (dir);
     }
+    content += "</pre><hr></body>\n</html>\n";
     header.addHeader("Content-Length", std::to_string(content.size()));
 }
 
