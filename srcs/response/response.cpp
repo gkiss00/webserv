@@ -1,6 +1,5 @@
 #include "Response.hpp"
 
-#define DIRECTORY_STATS 040000
 #define DEBUG 1
 
 Response::Response(RequestParser &query, Server &server)
@@ -71,7 +70,7 @@ void        Response::generateAutoindex()
     struct dirent *ent;
 
     content += "\n<html>\n<head><title>Index of " + trim(query.path, ".") + "</title></head>\n<body>\n";
-    content += "<h1>Index of " + trim(query.path, ".") + "</h1><hr><pre>\n";
+    content += "<h1>Index of " + trim(query.path, ".") + "</h1><hr><pre>";
     if ((dir = opendir(query.path.c_str())) != NULL)
     {
         while ((ent = readdir(dir)) != NULL)
@@ -79,12 +78,21 @@ void        Response::generateAutoindex()
             struct stat stats;
             std::string filename(ent->d_name);
 
-            content += "<a href=\"/" + query.path + std::string(filename) + "\">" + filename + "</a>";
-            for (size_t i = 0; i < 50 - filename.size(); i++)
+            if (filename == ".")
+                continue ;
+            content += "<a href=\"" + filename + ((is_dir(query.path + filename)) ? "/" : "") + "\">" + filename + ((is_dir(query.path + filename)) ? "/" : "") + "</a>";
+            if (filename == "..")
+            {
+                content += "\n";
+                continue ;
+            }
+            for (size_t i = 0; i < 50 - filename.size() - is_dir(query.path + filename); i++)
                 content += ' ';
-            stat(filename.c_str(), &stats);
-            content += string_date(gmtime(&stats.st_ctime));
-            content += fileExtension()[filename.substr(filename.find_last_of(".") + 1)];
+            stat((query.path + filename).c_str(), &stats);
+            content += index_date(gmtime(&stats.st_ctime));
+            for (size_t i = 0; i < 20 - ((is_dir(query.path + filename)) ? 1 : width(stats.st_size)); i++)
+                content += ' ';
+            content += (is_dir(filename)) ? "-" : std::to_string(stats.st_size);
             content += "\n";
         }
         closedir (dir);
@@ -100,7 +108,7 @@ void        Response::_get() {
         query.path = ".";
     if (stat(query.path.c_str(), &stats) == 0)
     {
-        if (stats.st_mode & DIRECTORY_STATS)
+        if (is_dir(query.path))
         {
             if (query.path[query.path.size() - 1] != '/')
                 query.path += "/";

@@ -14,3 +14,14 @@ std::string file_to_string(std::string path) {
     close(fd);
     return content;
 }
+
+bool        is_dir(std::string path) {
+    struct stat stats;
+    
+    if (stat(path.c_str(), &stats) == 0)
+    {
+        if (stats.st_mode & DIRECTORY_STATS)
+            return true;
+    }
+    return false;
+}
