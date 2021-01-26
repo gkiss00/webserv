@@ -1,2 +1,404 @@
-<h1>Index</h1>
-<p>You are on the index page, and not your finger xDDDDD</p>
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Webserv</title>
+        <style>
+            body{
+                border: 0px;
+                padding:0px;
+                margin:0px;
+                display : flex;
+                flex-direction : column;
+                align-items: center;
+                justify-content: center;
+            }
+            h1{
+                font-size: 70px;
+                font-weight: bold;
+            }
+            canvas {
+                background-color: black;
+                margin-bottom: 50px;
+            }
+            button {
+                width : 80px;
+                height: 40px;
+                border : none;
+                background-color: white;
+                border : solid purple 2px;
+            }
+            button:Hover{
+                box-shadow: 10px 5px 5px  purple;
+            }
+            #totalCanvas{
+                position:fixed;
+                top:0;
+                left:0;
+                width: 100%;
+                height: 100%;
+                z-index:-1;
+                background-color: #1f284f;
+                
+            }
+            footer{
+                width: 100%;
+                border-top : solid purple 2px;
+                text-align: center;
+                margin-top : 50px;
+            }
+        </style>
+    </head>
+    <body id="body">
+        <h1>Webserv</h1>
+        <h2>Pong</h2>
+        <canvas id="canvas1" width="600" height="400" style="border:1px solid #000000;"></canvas>
+        <div class="buttons">
+            <button id="pongButton" onclick="setPong()">Stop</button>
+        </div>
+        <h2>Matrix</h2>
+        <canvas id="canvas2" width="600" height="400" style="border:1px solid #000000;"></canvas>
+        <div class="buttons">
+            <button id="matrixButton" onclick="setMatrix()">Stop</button>
+        </div>
+        <h2>Snake</h2>
+        <canvas id="canvas3" width="600" height="400" style="border:1px solid #000000;"></canvas>
+        <div class="buttons">
+            <button id="snakeButton" onclick="setSnake()">Stop</button>
+        </div>
+        <canvas id="totalCanvas" style="border:1px solid #000000;"></canvas>
+        <footer>
+            <p>© Agossuin Cochapel Gkiss</p>
+        </footer>
+        <script>
+            //utils
+            function getRandomInt(max) {
+                return Math.floor(Math.random() * Math.floor(max));
+            }
+            //**************************************************
+            //**************************************************
+            //PONG
+            //**************************************************
+            //**************************************************
+            var var_pong = setInterval(pong, 50);
+            function setPong(){
+                
+                var b = document.getElementById("pongButton");
+                if (b.innerHTML === "Run"){
+                    b.innerHTML = "Stop";
+                    var_pong = setInterval(pong, 25);
+                }else{
+                    b.innerHTML = "Run";
+                    clearInterval(var_pong);
+                }
+            }
+            //get canvas
+            var canvas1 = document.getElementById("canvas1");
+            var ctx1 = canvas1.getContext("2d");
+
+            //set variables
+            var ball_radius = 10;
+            var x = 10;
+            var y = 100;
+            var velocityX = 5;
+            var velocityY = 5;
+
+            //set White
+            ctx1.fillStyle = "rgb(255, 255, 255, 1)";
+            
+            function pong(){
+                ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+
+                //rectangles
+                ctx1.fillRect(0, y - 25 , 10, 50);
+                ctx1.fillRect(canvas1.width - 10, (y - 25) , 10, 50);
+
+                //ball
+                ctx1.beginPath();
+                ctx1.arc(x, y, ball_radius, 0, 2*Math.PI);
+                ctx1.fill();
+
+                x += velocityX;
+                y += velocityY;
+                //if balls is on the right
+                if ((x + ball_radius) >= canvas1.width)
+                    velocityX *= -1;
+                //if balls is on the left
+                else if((x - ball_radius) <= 0)
+                    velocityX *= -1;
+                //if balls is on bot
+                if ((y + ball_radius) >= canvas1.height)
+                    velocityY *= -1;
+                //if balls is on top
+                else if ((y - ball_radius) <= 0)
+                    velocityY *= -1;   
+            }
+
+            //**************************************************
+            //**************************************************
+            //MATRIX
+            //**************************************************
+            //**************************************************
+
+            var var_matrix = setInterval(matrix, 120);
+            function setMatrix(){
+                
+                var b = document.getElementById("matrixButton");
+                if (b.innerHTML === "Run"){
+                    b.innerHTML = "Stop";
+                    var_matrix = setInterval(matrix, 120);
+                }else{
+                    b.innerHTML = "Run";
+                    clearInterval(var_matrix);
+                }
+            }
+            //get canvas
+            var canvas2 = document.getElementById("canvas2");
+            var ctx2 = canvas2.getContext("2d");
+
+            ctx2.font = "15px Arial bold";
+
+            var cols = canvas2.width / 20;
+            var rows = canvas2.height / 20;
+            var caract = [];
+            var chines = ["了", "从", " ", "0", "1", "7", "9", " ", "子"];
+
+            //fill
+            for (var i = 0; i < rows; ++i){
+                for (var j = 0; j < cols; ++j){
+                    caract.push(chines[getRandomInt(chines.length)]);
+                }
+            }
+
+            function matrix() {
+                //clear
+                ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+                //down 1 row
+                //foreach rows
+                for (var i = rows - 1; i >= 0; --i){
+                    //forach cols
+                    for (var j = 0; j < cols; ++j){
+                        //if we are on the first row, new one
+                        if (i == 0)
+                            caract[j] = chines[getRandomInt(chines.length)];
+                        //else, get the previous one
+                        else
+                            caract[(i * cols) + j] = caract[((i - 1) * cols) + j];
+                    }
+                }
+                //draw
+                for (var i = 0; i < rows; ++i){
+                    for (var j = 0; j < cols; ++j){
+                        ctx2.fillStyle = "rgb(0, 255, 0, " + Math.random() + ")";
+                        ctx2.fillText(caract[(i * cols) + j], (j * cols) + 5, (i * rows) + 10);
+                    }
+                }
+            }
+
+            //**************************************************
+            //**************************************************
+            //SNAKE
+            //**************************************************
+            //**************************************************
+            var var_snake = setInterval(snake, 200);
+            function setSnake(){
+                var b = document.getElementById("snakeButton");
+                if (b.innerHTML === "Run"){
+                    b.innerHTML = "Stop";
+                    var_snake = setInterval(snake, 200);
+                }else{
+                    b.innerHTML = "Run";
+                    clearInterval(var_snake);
+                }
+            }
+
+            //get canvas
+            var canvas3 = document.getElementById("canvas3");
+            var ctx3 = canvas3.getContext("2d");
+
+            var size = 20;
+            var cols_bis = canvas3.width / size;
+            var rows_bis = canvas3.height / size;
+
+            var foodX = getRandomInt(cols_bis);
+            var foodY = getRandomInt(rows_bis);
+
+            var my_snake = [[0, 0], [0, 1], [0, 2]];
+            var direction = 2;
+
+            function snake() {
+                
+                ctx3.clearRect(0, 0, canvas2.width, canvas2.height);
+                //draw food
+                ctx3.fillStyle = "rgb(255, 0, 0, 1)";
+                ctx3.fillRect(foodX * size, foodY * size, size, size);
+                ctx3.beginPath();
+                ctx3.rect(foodX * size, foodY * size, size, size);
+                ctx3.stroke();
+                //draw snake
+                ctx3.fillStyle = "rgb(0, 0, 255, 1)";
+                for (var i = 0; i < my_snake.length; ++i){
+                    ctx3.fillRect(my_snake[i][1] * size, my_snake[i][0] * size, size, size)
+                }
+                ctx3.strokeStyle = "#FFFFFF";
+                //fill cases
+                for (var i = 0; i < rows_bis; ++i){
+                    for (var j = 0; j < cols_bis; ++j){
+                        ctx3.beginPath();
+                        ctx3.rect(j * size, i * size, size, size);
+                        ctx3.stroke();
+                    }
+                }
+                avance();
+                updateFood();
+            }
+
+            function avance(){
+                var next = my_snake[0];
+                //if up
+                if (direction == 1){
+                    next[0] -= 1;
+                //if right
+                }else if (direction == 2){
+                    next[1] += 1;
+                //if down
+                }else if (direction == 3){
+                    next[0] += 1;
+                //if left
+                }else{
+                    next[1] -= 1;
+                }
+                for(var i = my_snake.length - 1; i > 0; --i){
+                    my_snake[i] = my_snake[i - 1];
+                }
+                my_snake[0] = next;
+            }
+
+            function updateFood(){
+                if(my_snake[0][1] == foodX && my_snake[0][0] == foodY){
+                    foodX = getRandomInt(cols_bis);
+                    foodY = getRandomInt(rows_bis);
+                }
+
+            }
+
+            document.addEventListener('keyup', e =>{
+                //left
+                if (e.code == "ArrowRight"){
+                    direction = 2;
+                //up
+                }else if (e.code === "ArrowUp"){
+                    direction = 1;
+                //right
+                }else if (e.code == "ArrowLeft"){
+                    direction = 4;
+                //40
+                }else if (e.code === "ArrowDown"){
+                    direction = 3;
+                }
+            });
+
+            //**************************************************
+            //**************************************************
+            //TOTAL CANVAS
+            //**************************************************
+            //**************************************************
+
+            var totalCanvas =  document.getElementById("totalCanvas");
+            var totalCtx = totalCanvas.getContext("2d");
+            totalCanvas.width = window.innerWidth;
+            totalCanvas.height = window.innerHeight;
+
+            //set White
+            totalCtx.fillStyle = "rgb(255, 255, 255, 1)";
+            totalCtx.strokeStyle = "rgb(255, 255, 255, 1)";
+            //var
+            var balls = [];
+            var nb_balls = 20;
+            var center_x = window.innerWidth / 2;
+            var center_y = window.innerHeight / 2;
+            var nb_connections = 3;
+            //init balls position
+            for (var i = 0; i < nb_balls; ++i){
+                var pos_x = getRandomInt(window.innerWidth);
+                var pos_y = getRandomInt(window.innerHeight);
+                var tmp = [pos_x, pos_y];
+                balls.push(tmp);
+            }
+            //draw_balls();
+            setInterval(draw_balls, 50);
+            function draw_balls(){
+                totalCtx.clearRect(0, 0, totalCanvas.width, totalCanvas.height);
+                for(var i = 0; i < nb_balls; ++i){
+                    var closests = get_three_closest(balls[i]);
+                    for (var j = 0; j < closests.length; ++j){
+                        totalCtx.beginPath();
+                        totalCtx.moveTo(balls[i][0], balls[i][1]);
+                        totalCtx.lineTo(closests[j][0], closests[j][1]);
+                        totalCtx.stroke();
+                    }
+                }
+                //draw_lines();
+            }
+
+            function draw_lines(){
+                for(var i = 0; i < nb_balls; ++i){
+                    var closests = get_three_closest(balls[i]);
+                    for (var j = 0; j < closests.length; ++j){
+                        totalCtx.beginPath();
+                        totalCtx.moveTo(balls[i][0], balls[i][1]);
+                        totalCtx.lineTo(closests[j][0], closests[j][1]);
+                        totalCtx.stroke();
+                    }
+                }
+            }
+
+            function get_three_closest(ball){
+                var closests = [];
+                for(var i = 0; i < nb_balls; ++i){
+                    var dist = getDist(ball, balls[i]);
+                    if(dist != 0){
+                        if(closests.length < nb_connections){
+                            closests.push(balls[i]);
+                        }else{
+                            var max = -1;
+                            var k = 0;
+                            for (var j = 0; j < closests.length; ++j){
+                                if(max < getDist(ball, closests[j])){
+                                    console.log(closests.length);
+                                    max = getDist(ball, closests[j]);
+                                    k = j;
+                                }
+                            }
+                            if(getDist(ball, balls[i]) < max){
+                                closests.splice(k, 1, balls[i]);
+                            }
+                        }
+                    }
+                }
+                return closests;
+            }
+
+            function getDist(ball1, ball2){
+                return (Math.sqrt(Math.pow(ball1[0] - ball2[0], 2) + Math.pow(ball1[1] - ball2[1], 2)));
+            }
+            var body = document.getElementById("body");
+            body.addEventListener('mousemove', function(e){
+                var tmp_x = e.clientX;
+                var tmp_y = e.clientY;
+                var xxx = [tmp_x, tmp_y]
+
+                balls.splice(balls.length - 1, 1, xxx);
+                /*
+                var closests = get_three_closest(xxx);
+                for (var j = 0; j < closests.length; ++j){
+                    totalCtx.beginPath();
+                    totalCtx.moveTo(xxx[0], xxx[1]);
+                    totalCtx.lineTo(closests[j][0], closests[j][1]);
+                    totalCtx.stroke();
+                }
+                */
+            });
+
+        </script>
+    </body>
+</html>
