@@ -38,4 +38,6 @@
 
 using std::string;
 
+extern std::vector<Server>  servers;
+
 #endif

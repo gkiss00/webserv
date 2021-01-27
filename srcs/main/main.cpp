@@ -107,14 +107,11 @@ std::string     get_client_request(int client_socket){
     char        buf[1001];
     int         ret;
 
-    ret = recv(client_socket, buf, 1000, 0);
-    buf[ret] = '\0';
-    // std::cout << buf << std::endl;
-    request = buf;
-    usleep(1000);
-    ret = recv(client_socket, buf, 1000, 0);
-    buf[ret] = '\0';
-    request += buf;
+    while ((ret = recv(client_socket, buf, 1000, 0)) > 0){
+        buf[ret] = '\0';
+        request += buf;
+        usleep(1000);
+    }    
     return (request);
 }
 

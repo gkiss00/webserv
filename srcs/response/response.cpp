@@ -43,7 +43,7 @@ void        Response::setAllowedMethodsHeader() {
 void        Response::getFile() {
     struct stat stats;
 
-    content = file_to_string(query.path);
+    content = "\r\n" + file_to_string(query.path);
     stat(query.path.c_str(), &stats);
     header.addHeader("Content-Length", std::to_string(content.size()));
     header.addHeader("Content-Type", "text/html");
@@ -212,9 +212,12 @@ void        Response::execCGI()
             dup2(fd[0], STDIN_FILENO);
             dup2(fd_write_from_child[1], STDOUT_FILENO);
 
-            char    arg1[] = "/Users/corentin/Documents/Programmation/19/webserv/srcs/pages/cgi-bin/add.cgi";
+            // char    arg1[] = std::string(servers[0].root + this->query.path).c_str();
+            // char    arg1[] = "/Users/corentin/Documents/Programmation/19/webserv/srcs/pages/cgi-bin/add.cgi";
             char    *args[2];
-            args[0] = arg1;
+            args[0] = (char *)std::string(servers[0].root + "/" + this->query.path).c_str();
+            std::cerr << "\033[32;1m args[0] = " << args[0] << std::endl;
+            std::cerr << "\033[0m";
             args[1] = NULL;
 
             char env1[] = "REQUEST_METHOD=POST";
@@ -222,33 +225,33 @@ void        Response::execCGI()
             env[0] = env1;
             env[1] = NULL;
 
-            execve("/Users/corentin/Documents/Programmation/19/webserv/srcs/pages/cgi-bin/add.cgi", args, env);
+            execve(args[1], args, env);
             perror("execve failed: ");
             return ;
         } else {
             close(fd[0]);
             close(fd_write_from_child[1]);
 
-            usleep(1000);
             // std::cout << "---- send to child ----" << std::endl;
             // std::cout << this->query.body << std::endl;
             write(fd[1], this->query.body.c_str(), this->query.body.size());
             close(fd[1]);
 
-            char buff[10001];
+            std::string request;
+            char buf[1001];
             int ret;
             wait(NULL);
-            if ((ret = read(fd_write_from_child[0], buff, 10000)) == -1)
-            {
-                perror("read fails: ");
-            }
-            buff[ret] = '\0';
+
+            while ((ret = read(fd_write_from_child[0], buf, 1000)) > 0){
+                buf[ret] = '\0';
+                request += buf;
+            } 
             close(fd_write_from_child[0]);
             
             // std::cout << "---- get from child ----" << std::endl;
             // std::cout << buff << std::endl;
             // std::cout << "---- end ----" << std::endl;
-            this->content = std::string(buff);
+            this->content = std::string(buf);
         }
     }
 }
@@ -301,7 +304,7 @@ string Response::render() {
     else
         execute();
 
-    std::string response(statusLine(status) + header.toString() + "\r\n" + content + "\r\n");
+    std::string response(statusLine(status) + header.toString() + content + "\r\n");
 
 #ifdef DEBUG
     std::cout << "_____RESPONSE_____" << std::endl;
