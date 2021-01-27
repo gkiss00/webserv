@@ -8,7 +8,7 @@ SRCS =	srcs/main/main.cpp \
 		srcs/tools/split.cpp \
 		srcs/tools/numbers.cpp \
 		srcs/tools/trim.cpp \
-		srcs/response/response.cpp \
+		srcs/response/Response.cpp \
 		srcs/response/ResponseHeader.cpp \
 		srcs/configFileReader/Server.cpp \
 		srcs/configFileReader/ConfigFileReader.cpp \
