@@ -20,7 +20,7 @@ Response::~Response() {}
 void        Response::error(int status) {
     this->status = status;
     query.path = server.error_pages[status];
-    getFile();
+    // getFile(); // boucle infinie en 404 error vient de get
 }
 
 std::string Response::statusLine(int status) {
@@ -104,6 +104,7 @@ void        Response::generateAutoindex()
 void        Response::_get() {
     struct stat stats;
 
+    system("pwd");
     if (query.path == "")
         query.path = ".";
     if (stat(query.path.c_str(), &stats) == 0)
@@ -331,7 +332,7 @@ void        Response::execute() {
         this->_trace();
     } else if (query.command == "PATCH") {
         this->_patch();
-    } 
+    }
 }
 
 string Response::render() {
