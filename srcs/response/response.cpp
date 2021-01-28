@@ -1,6 +1,5 @@
 #include "Response.hpp"
 
-#define DIRECTORY_STATS 040000
 #define DEBUG 1
 
 Response::Response(RequestParser &query, Server &server)
@@ -43,10 +42,9 @@ void        Response::setAllowedMethodsHeader() {
 void        Response::getFile() {
     struct stat stats;
 
-    content = "\r\n" + file_to_string(query.path);
+    content = "\n" + file_to_string(query.path);
     stat(query.path.c_str(), &stats);
     header.addHeader("Content-Length", std::to_string(content.size()));
-    header.addHeader("Content-Type", "text/html");
     header.addHeader("Last-Modified", string_date(gmtime(&stats.st_ctime)));
     header.addHeader("Content-Location", query.path);
     header.addHeader("Content-Type", fileExtension()[query.path.substr(query.path.find_last_of(".") + 1)]);
@@ -66,19 +64,63 @@ void        Response::getFile() {
 //  \__, | \___| \__|
 //  |___/            
 
+void        Response::generateAutoindex()
+{
+    DIR *dir;
+    struct dirent *ent;
+
+    content += "\n<html>\n<head><title>Index of " + trim(query.path, ".") + "</title></head>\n<body>\n";
+    content += "<h1>Index of " + trim(query.path, ".") + "</h1><hr><pre>";
+    if ((dir = opendir(query.path.c_str())) != NULL)
+    {
+        while ((ent = readdir(dir)) != NULL)
+        {
+            struct stat stats;
+            std::string filename(ent->d_name);
+
+            if (filename == ".")
+                continue ;
+            content += "<a href=\"" + filename + ((is_dir(query.path + filename)) ? "/" : "") + "\">" + filename + ((is_dir(query.path + filename)) ? "/" : "") + "</a>";
+            if (filename == "..")
+            {
+                content += "\n";
+                continue ;
+            }
+            for (size_t i = 0; i < 50 - filename.size() - is_dir(query.path + filename); i++)
+                content += ' ';
+            stat((query.path + filename).c_str(), &stats);
+            content += index_date(gmtime(&stats.st_ctime));
+            for (size_t i = 0; i < 20 - ((is_dir(query.path + filename)) ? 1 : width(stats.st_size)); i++)
+                content += ' ';
+            content += (is_dir(filename)) ? "-" : std::to_string(stats.st_size);
+            content += "\n";
+        }
+        closedir (dir);
+    }
+    content += "</pre><hr></body>\n</html>\n";
+    header.addHeader("Content-Length", std::to_string(content.size()));
+}
+
 void        Response::_get() {
     struct stat stats;
-    
+
+    if (query.path == "")
+        query.path = ".";
     if (stat(query.path.c_str(), &stats) == 0)
     {
-        if (stats.st_mode & DIRECTORY_STATS)
+        if (is_dir(query.path))
         {
-            std::cout << ">>" << query.path << "\n";
             if (query.path[query.path.size() - 1] != '/')
                 query.path += "/";
+            if (server.autoindex)
+            {
+                generateAutoindex();
+                status = 200;
+                return ;
+            }
             if (server.default_file != "") {
                 query.path += server.default_file;
-                _get(); // maybe readdir for autoindex on?
+                _get();
             }
         }
         status = 200;
@@ -194,64 +236,64 @@ void        Response::_post() {
 
 void        Response::execCGI()
 {
-    int		fd[2]; // 0 = read 1 = write
+    pid_t   pid;
+    int		fd_write_from_parent[2]; // 0 = read 1 = write
     int		fd_write_from_child[2];
 
     if (status == 200) {
-        pipe(fd);
+        pipe(fd_write_from_parent);
         pipe(fd_write_from_child);
-
-        pid_t pid = fork();
+    
+        pid = fork();
         if (pid == -1) {
             perror("fork failed: ");
             return ;
         } else if (pid == 0) {
-            close(fd[1]);
+            close(fd_write_from_parent[1]);
             close(fd_write_from_child[0]);
-
-            dup2(fd[0], STDIN_FILENO);
+            dup2(fd_write_from_parent[0], STDIN_FILENO);
             dup2(fd_write_from_child[1], STDOUT_FILENO);
 
-            // char    arg1[] = std::string(servers[0].root + this->query.path).c_str();
-            // char    arg1[] = "/Users/corentin/Documents/Programmation/19/webserv/srcs/pages/cgi-bin/add.cgi";
             char    *args[2];
-            args[0] = (char *)std::string(servers[0].root + "/" + this->query.path).c_str();
-            std::cerr << "\033[32;1m args[0] = " << args[0] << std::endl;
-            std::cerr << "\033[0m";
+            args[0] = (char *)std::string("./" + this->query.path).c_str();
             args[1] = NULL;
 
-            char env1[] = "REQUEST_METHOD=POST";
             char *env[2];
-            env[0] = env1;
+            env[0] = (char *)"REQUEST_METHOD=POST";
             env[1] = NULL;
 
-            execve(args[1], args, env);
+            execve(NULL, args, env);
             perror("execve failed: ");
-            return ;
-        } else {
-            close(fd[0]);
+            close(fd_write_from_parent[0]);
             close(fd_write_from_child[1]);
-
+            exit(-1);
+        } else {
+            close(fd_write_from_parent[0]);
+            close(fd_write_from_child[1]);
             // std::cout << "---- send to child ----" << std::endl;
             // std::cout << this->query.body << std::endl;
-            write(fd[1], this->query.body.c_str(), this->query.body.size());
-            close(fd[1]);
+            write(fd_write_from_parent[1], this->query.body.c_str(), this->query.body.size());
+            close(fd_write_from_parent[1]);
 
             std::string request;
             char buf[1001];
             int ret;
-            wait(NULL);
-
+            int status;
+            wait(&status);
+            if (WIFEXITED(status) && WEXITSTATUS(status) == -1){
+                this->content = "";
+                return ;
+            } 
             while ((ret = read(fd_write_from_child[0], buf, 1000)) > 0){
                 buf[ret] = '\0';
                 request += buf;
-            } 
+            }
             close(fd_write_from_child[0]);
             
             // std::cout << "---- get from child ----" << std::endl;
             // std::cout << buff << std::endl;
             // std::cout << "---- end ----" << std::endl;
-            this->content = std::string(buf);
+            this->content = std::string(request);
         }
     }
 }

@@ -17,6 +17,7 @@
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
+# include <dirent.h>
 
 # include <iostream>
 # include <vector>
@@ -25,10 +26,6 @@
 # include <stack>
 # include <map>
 # include <algorithm>
-
-# include <iomanip>
-# include <fstream>
-# include <sstream>
 
 # include "../requestParser/RequestParser.hpp"
 # include "../response/Response.hpp"

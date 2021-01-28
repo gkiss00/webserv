@@ -19,8 +19,9 @@ class Response
     std::string statusLine(int status);
     void    getFile();
     void    moveFile();
-    void    execCGI();
     void    setAllowedMethodsHeader();
+    void    execCGI();
+    void    generateAutoindex();
     // void    digestPath();
 
     // commands

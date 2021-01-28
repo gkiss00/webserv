@@ -17,6 +17,12 @@ std::string string_date(std::tm*  time) {
     return std::string(buf);
 }
 
+std::string index_date(std::tm*  time) {
+    char        buf[64];
+
+    strftime (buf, 64, "%d-%b-%Y %R", time);
+    return std::string(buf);
+}
 
 // from "Fri, 31 Dec 1999 23:59:59 GMT" to struct tm
 

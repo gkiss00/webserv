@@ -39,7 +39,7 @@ Server ConfigFileReader::getServer(std::vector<std::string> lines, unsigned int 
         }else{
             std::vector<std::string> args = split(line, " ");
             //for (unsigned int j = 0; j < args.size(); ++j){
-                //std::cout << j << " : " <<args[j] << std::endl;
+                //std::cout << j << " : " << args[j] << std::endl;
             //}
             if (args[0].compare("listen") == 0){
                 std::cout << args[1] << std::endl;
@@ -53,7 +53,7 @@ Server ConfigFileReader::getServer(std::vector<std::string> lines, unsigned int 
             }else if (args[0].compare("root") == 0){
                 server.root = trim(args[1], ";");
             }else if (args[0].compare("autoindex") == 0){
-                server.autoindex = (args[1].compare("on") == 0);
+                server.autoindex = (trim(args[1], ";").compare("on") == 0);
             }else if (args[0].compare("methods") == 0){
                 ++*i;
                 args = split(lines.at(*i), " ");
