@@ -21,7 +21,7 @@ NAME = webserv
 INCDIR = ./srcs/include/
 
 CXX = clang++
-CXXFLAGS = -Wall -Wextra -Werror -I${INCDIR}
+CXXFLAGS = -std=c++98 -Wall -Wextra -Werror -I${INCDIR}
 
 DELETE = rm -f
 

@@ -8,7 +8,7 @@ RUN apt-get update \
     && apt-add-repository -y ppa:nginx/stable \
     && apt-get update \
     && apt-get install -y nginx \
-    && apt-get install fcgiwrap \
+    && apt-get install -y fcgiwrap \
     && rm -rf /var/lib/apt/lists/*
 
 ADD nginx/nginx.conf /etc/nginx/nginx.conf

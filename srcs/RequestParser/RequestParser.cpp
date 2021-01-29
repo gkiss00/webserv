@@ -13,60 +13,110 @@ std::string RequestParser::get_next(std::string &str, const std::string delimite
     size_t      i;
 
     // std::cout << "str = " << str << std::endl;
+    // std::cout << "find\n";
     if ((i = str.find(delimiter)) != std::string::npos){
+        // std::cout << "end find\n";
         token = str.substr(0, i);
         str.erase(0, i + delimiter.length());
         return token;
     }else{
-        throw "No next";
+        throw request_exception("No next.", 400);
     }
 }
 
 void    RequestParser::parse(std::string request){
     std::string delimiter("\r\n"), initial_request_line_delimiter(" "), headers_delimiter(":");
     std::string token, key, last_key;
+    bool        just_1_line(false);
+    bool        is_content_lenght_exists(false);
 
-    // std::cout << "---------------------------------" << std::endl;
+    // std::cout << "--------------- Raw Input ------------------" << std::endl;
+    // std::cout << request.size() << std::endl;
+
+    request = request.substr(0, REQUEST_MAX_SIZE);
+
     // std::cout << request << std::endl;
     // std::cout << "---------------------------------" << std::endl;
+
     try{
         token = this->get_next(request, delimiter);
-        // std::cout << "token = " << token << std::endl;
-        this->command = this->get_next(token, initial_request_line_delimiter);
-        // std::cout << "command = " << this->command << std::endl;
+    }catch(request_exception &e){
+        token = request;
+        just_1_line = true;
+    }
+    this->command = this->get_next(token, initial_request_line_delimiter);
+    try{
         this->path = this->get_next(token, initial_request_line_delimiter);
-        this->path.erase(0, 1);
-        // std::cout << "path = " << this->path << std::endl;
-        // std::cout << "token = " << token << std::endl;
-        token.erase(0, 5);
-        // std::cout << "tmp_HTTP_version = " << token << std::endl;
+    }catch(request_exception &e){
+        this->path = token;
+        if (this->path.size() > URL_MAX_SIZE){
+            throw request_exception("Url too long.", 414);
+        }else{
+            throw request_exception("No next.", 400);
+        }
+    }
+    if (this->path.size() > URL_MAX_SIZE){
+        throw request_exception("Url too long.", 414);
+    }
+    this->path.erase(0, 1);
+    token.erase(0, 5);
+    try{
         this->HTTP_version = std::stod(token);
+    }catch(std::exception &e){
+        throw request_exception(e.what(), 400);
+    }
+    if (this->HTTP_version != 1.1){
+        throw request_exception("Bad http version.", 400);
+    }
+    if (just_1_line == false){
         token = this->get_next(request, delimiter);
-        // std::cout << "token = " << token << std::endl;
         while (token != ""){
             try{
                 key = this->get_next(token, headers_delimiter);
-                while(token[0] == ' ' || token[0] == '\t'){
+                if (isspace(key.back())){
+                    throw request_exception("No space between header-name and colon.", 400);
+                }
+                if (key.size() == 0){
+                    throw request_exception("Empty header-name.", 400);
+                }
+                while (isspace(token[0])){
                     token.erase(0, 1); 
+                }
+                if (key == "Content-Length"){
+                    if (is_content_lenght_exists == false){
+                        is_content_lenght_exists = true;
+                    }else{
+                        throw request_exception("Content-lenght already set", 400);
+                    }
+                    int lenght;
+                    try{
+                        lenght = std::stoi(token);
+                    }catch(std::exception &e){
+                        throw request_exception("Bad content-lenght value.", 400);
+                    }
+                    if (lenght < 0 || lenght > CONTENT_LENGHT_MAX){
+                        throw request_exception("Bad content-lenght value.", 400);
+                    }
                 }
                 this->headers.insert(std::pair<std::string, std::string>(key, token));
                 last_key = key;
             }
-            catch(const char *str){
-                if (this->headers.size() == 0){
-                    throw "Bad headers";
+            catch(request_exception &e){
+                if (e.what() != std::string("No next.")){
+                    throw e;
                 }
-                while(token[0] == ' ' || token[0] == '\t'){
+                if (this->headers.size() == 0){
+                    throw request_exception("Bad headers.", 400);
+                }
+                while (isspace(token[0])){
                     token.erase(0, 1); 
                 }
                 this->headers[last_key] += token;
             }
             token = this->get_next(request, delimiter);
-            // std::cout << "token = " << token << std::endl;
         }
         this->body = request;
-    }
-    catch (const char *str){
-        std::cout << str << std::endl;
+    }else{
+        this->body = "";
     }
 }

@@ -3,7 +3,33 @@
 
 #include "webserv.hpp"
 
-#define GET 0
+#define URL_MAX_SIZE 2000
+#define REQUEST_MAX_SIZE 10000
+#define CONTENT_LENGHT_MAX 10000
+
+class request_exception : public std::exception {
+
+    public:
+
+    request_exception(std::string msg, int error_status) {
+        this->_msg = msg;
+        this->_error_status = error_status;
+    }
+
+    const char   *what () const throw () {
+        return this->_msg.c_str();
+    }
+
+    int         get_error_status() const {
+        return this->_error_status;
+    }
+
+    ~request_exception() _NOEXCEPT {}
+
+    private:
+    int         _error_status;
+    std::string _msg;
+};
 
 class RequestParser
 {

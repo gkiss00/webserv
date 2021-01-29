@@ -106,10 +106,10 @@ int     add_new_client(int server_socket)
 //GET THE REQUEST FROM THE CLIENT
 std::string     get_client_request(int client_socket){
     std::string request;
-    char        buf[1001];
+    char        buf[1000001];
     int         ret;
 
-    while ((ret = recv(client_socket, buf, 1000, 0)) > 0){
+    while ((ret = recv(client_socket, buf, 1000000, 0)) > 0){
         buf[ret] = '\0';
         request += buf;
         usleep(1000);
@@ -215,21 +215,28 @@ int     main(){
                         std::cout << "new request" << std::endl;
 
                         //read
-                        RequestParser   request(get_client_request(i));
-                        std::cout << "__________client_request__________" << std::endl;
-                        std::cout << "Command = " << request.command << std::endl;
-                        std::cout << "Path = " << request.path << std::endl;
-                        std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
-                        for (std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
-                            std::cout << "Headers = " << it->first << " : " << it->second << std::endl;
-                        }
-                        std::cout << "Body = " << request.body << std::endl;
+                        try{
+                            RequestParser   request(get_client_request(i));
+                            std::cout << "__________client_request__________" << std::endl;
+                            std::cout << "Command = " << request.command << std::endl;
+                            std::cout << "Path = " << request.path << std::endl;
+                            std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
+                            for (std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
+                                std::cout << "Headers = " << it->first << " : " << it->second << std::endl;
+                            }
+                            std::cout << "Body = " << request.body << std::endl;
 
-                        //write
+                            //write
+                            
+                            std::cout << "__________server_print__________" << std::endl;
+                            Response response(request, get_good_server(i)); // need to take care of all servers, but for now we focus on the 5000
+                            send_client_response(i, response.render());
+                        }catch(request_exception &e){
+                            // bad message
+                            std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
+                            send_client_response(i, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
+                        }
                         
-                        std::cout << "__________server_print__________" << std::endl;
-                        Response response(request, get_good_server(i)); // need to take care of all servers, but for now we focus on the 5000
-                        send_client_response(i, response.render());
                         //close the socket
                         close_client_socket(i);
                     }

@@ -104,7 +104,7 @@ void        Response::generateAutoindex()
 void        Response::_get() {
     struct stat stats;
 
-    system("pwd");
+    // system("pwd");
     if (query.path == "")
         query.path = ".";
     if (stat(query.path.c_str(), &stats) == 0)
@@ -231,7 +231,7 @@ void        Response::moveFile()
 // |_|                     
 
 void        Response::_post() {
-    status = 401;
+    status = 200;
     this->execCGI();
 }
 
