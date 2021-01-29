@@ -1,11 +1,13 @@
 #include "webserv.hpp"
 
 std::string file_to_string(std::string path) {
-    std::string content;
+    std::string content = "";
     int ret;
     char buf[257];
 
     int fd = open(path.c_str(), O_RDONLY);
+    if (fd == -1)
+        return content;
     while ((ret = read(fd, buf, 256)))
     {
         buf[ret] = '\0';

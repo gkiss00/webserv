@@ -4,8 +4,9 @@
 
 Response::Response(RequestParser &query, Server &server)
 : query(query), server(server) {
+    set_location();
     setAllowedMethodsHeader();
-    chdir(server.locations[0].root.c_str());
+    chdir(server.locations[loc].root.c_str());
 }
 
 Response::~Response() {}
@@ -15,12 +16,12 @@ Response::~Response() {}
 // | | | |  | |   | | | |    \___ | 
 // | |_| |  | |   | | | |___  ___) |
 //  \___/   |_|  |___||_____||____/ 
-                                 
+//                                  
 
 void        Response::error(int status) {
     this->status = status;
     query.path = server.error_pages[status];
-    // getFile();
+    getFile();
     // getFile(); // boucle infinie en 404 error vient de get
 }
 
@@ -32,9 +33,9 @@ std::string Response::statusLine(int status) {
 // header update
 void        Response::setAllowedMethodsHeader() {
     std::string allowed;
-    for (unsigned int i = 0; i < server.locations[0].methods.size(); ++i){
-        allowed += server.locations[0].methods.at(i);
-        if (i != server.locations[0].methods.size() - 1)
+    for (unsigned int i = 0; i < server.locations[loc].methods.size(); ++i){
+        allowed += server.locations[loc].methods.at(i);
+        if (i != server.locations[loc].methods.size() - 1)
             allowed += ", ";
     }
     header.addHeader("Allowed-Methods", allowed);
@@ -105,7 +106,7 @@ void        Response::generateAutoindex()
 void        Response::_get() {
     struct stat stats;
 
-    system("pwd");
+    std::cout << "GETTTTTTTTTTTTTTTTT: " << query.path << std::endl;
     if (query.path == "")
         query.path = ".";
     if (stat(query.path.c_str(), &stats) == 0)
@@ -114,14 +115,14 @@ void        Response::_get() {
         {
             if (query.path[query.path.size() - 1] != '/')
                 query.path += "/";
-            if (server.locations[0].autoindex)
+            if (server.locations[loc].autoindex)
             {
                 generateAutoindex();
                 status = 200;
                 return ;
             }
-            if (server.locations[0].default_file != "") {
-                query.path += server.locations[0].default_file;
+            if (server.locations[loc].default_file != "") {
+                query.path += server.locations[loc].default_file;
                 _get();
             }
         }
@@ -220,7 +221,7 @@ void        Response::_delete() {
 void        Response::moveFile()
 {
     if (status == 200) {
-        // move to bin folder when locations[0].root will be
+        // move to bin folder when locations[loc].root will be
         if (rename(this->query.path.c_str(), string(this->query.path + ".del").c_str()) != 0){
             perror("File moving failed: ");
         }
@@ -347,19 +348,45 @@ void        Response::execute() {
     }
 }
 
-string Response::render() {
+void    Response::set_location()
+{
+    unsigned int compatibility = 0;
+    loc = 0;
+
+    for (unsigned int i = 0; i < server.locations.size(); ++i)
+    {
+        std::string dir = server.locations[i].dir;
+        if (dir[0] == '/')
+            dir = dir.substr(1);
+        std::cout << "dir = " << dir << std::endl;
+        if (!query.path.compare(0, dir.size(), dir) && dir.size() >= compatibility)
+        {
+            loc = i;
+            compatibility = dir.size();
+        }
+    }
+
+    std::cout << "QP = " << query.path << std::endl;
+    std::cout << "dir = " << server.locations[loc].dir << std::endl;
+    query.path = query.path.substr(server.locations[loc].dir.size() - 1);
+    if (query.path[0] == '/') query.path = query.path.substr(1);
+    std::cout << "QP = " << query.path << std::endl;
+    std::cout << "LOC = " << loc << std::endl;
+}
+
+string  Response::render() {
     std::vector<std::string> allImplementedMethods = implementedMethods();
 
     if (!std::count(allImplementedMethods.begin(), allImplementedMethods.end(), query.command))
         error(501); // not implemented
 
-    else if (!std::count(server.locations[0].methods.begin(), server.locations[0].methods.end(), query.command))
+    else if (!std::count(server.locations[loc].methods.begin(), server.locations[loc].methods.end(), query.command))
         error(405); // not authorized
 
     else
         execute();
 
-    std::string response(statusLine(status) + header.toString() + content + "\n\r");
+    std::string response(statusLine(status) + header.toString() + content + (content == "" ? "" : ""));
 
 #ifdef DEBUG
     std::cout << "_____RESPONSE_____" << std::endl;

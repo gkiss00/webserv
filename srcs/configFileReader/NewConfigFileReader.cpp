@@ -100,6 +100,8 @@ Location    NewConfigFileReader::getLocation(std::vector<std::string> lines, uns
                 location.autoindex = (trim(args[1], ";").compare("on") == 0);
             }else if (args[0].compare("index") == 0){ // get DEFAULT_FILE
                 location.default_file = trim(args[1], ";");
+                std::cout << "0000000000000000" << std::endl;
+                std::cout << location.default_file << std::endl;
             }else if (args[0].compare("cgi") == 0){ // get CGI
                 location.cgi.insert(getCGI(lines, i));
             }else if (args[0].compare("upload") == 0){ // get UPLOAD location
