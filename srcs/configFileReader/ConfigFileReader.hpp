@@ -5,8 +5,6 @@
 #include "Server.hpp"
 class Server;
 
-#define CONFIG_FILE_PTAH "srcs/config/webserv.conf"
-
 class ConfigFileReader{
     public:
         ConfigFileReader();
