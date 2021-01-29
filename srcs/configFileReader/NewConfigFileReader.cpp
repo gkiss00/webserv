@@ -35,7 +35,7 @@ Server  NewConfigFileReader::getServer(std::vector<std::string> lines, unsigned 
             break;
         }else{
             std::vector<std::string> args = split(line, " "); // get all args of the line
-            
+
             if (args[0].compare("listen") == 0){ // get the PORT of the server
                 server.listen = std::stoi(args[1]);
             }else if (args[0].compare("server_name") == 0){ // get the SERVER_NAMES of the server
