@@ -26,7 +26,7 @@ std::vector<Server> NewConfigFileReader::read(std::string path){
 Server  NewConfigFileReader::getServer(std::vector<std::string> lines, unsigned int *i){
     Server server;
     while (*i < lines.size()){
-        std::string line = trim(lines.at(i), " "); //get the current line
+        std::string line = trim(lines.at(*i), " "); //get the current line
 
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS
@@ -36,7 +36,6 @@ Server  NewConfigFileReader::getServer(std::vector<std::string> lines, unsigned 
             std::vector<std::string> args = split(line, " "); // get all args of the line
             
             if (args[0].compare("listen") == 0){ // get the PORT of the server
-                std::cout << args[1] << std::endl;
                 server.listen = std::stoi(args[1]);
             }else if (args[0].compare("server_name") == 0){ // get the SERVER_NAMES of the server
                 for (unsigned int j = 1; j < args.size(); ++j){
@@ -47,11 +46,12 @@ Server  NewConfigFileReader::getServer(std::vector<std::string> lines, unsigned 
             }else if (args[0].compare("error_page") == 0){ // get the ERROR_PAGES of the server
                 server.error_pages.insert(std::pair<int, std::string>(std::stoi(args[1]), trim(args[2], ";")));
             }else if (args[0].compare("metavariables") == 0){ // get METAVAR of the server
-                server.metavariables = getMetavar(lines, ++*i);
+                server.metavariables = getMetavar(lines, i);
             }else if (args[0].compare("location") == 0){ // get LOCATION of the server
-                server.locations.push_back(getLocation(lines, *i));
+                server.locations.push_back(getLocation(lines, i));
             }
         }
+        ++*i;
     }
     return (server);
 }
@@ -59,6 +59,7 @@ Server  NewConfigFileReader::getServer(std::vector<std::string> lines, unsigned 
 std::vector<std::string> NewConfigFileReader::getMetavar(std::vector<std::string> lines, unsigned int *i){
     std::vector<std::string> metavar;
     
+    ++*i;
     while(*i < lines.size()){
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS
@@ -81,12 +82,15 @@ Location    NewConfigFileReader::getLocation(std::vector<std::string> lines, uns
     location.dir = split(lines.at(*i), " ")[1]; // get the DIR
     ++*i;
     while(*i < lines.size()){
+        std::string line = split(lines.at(*i)); // get the current line
+
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS
         }else if(line[0] == '}'){ // if close : BREAK
             break;
         }else{
-            std::vector<std::string> args = split(lines.at(*i), " ");
+            std::vector<std::string> args = split(line, " "); // get all args of the line
+
             if(args[0].compare("root") == 0){ // get the ROOT
                 location.root = trim(args[1], ";");
             }else if (args[0].compare("autoindex") == 0){ // get AUTOINDEX
@@ -111,12 +115,14 @@ std::vector<std::string> NewConfigFileReader::getMethods(std::vector<std::string
 
     ++*i;
     while(*i < lines.size()){
+        std::string line = split(lines.at(*i)); // get the current line
+
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS
         }else if(line[0] == '}'){ // if close : BREAK
             break;
         }else{
-            std::vector<std::string> args = split(lines.at(*i), " ");
+            std::vector<std::string> args = split(line, " ");
             for (unsigned int j = 0; j < args.size(); ++j){
                 methods.push_back(trim(args.at(j), ";"));
                 ++j;
@@ -131,15 +137,17 @@ std::pair<std::string, std::string> NewConfigFileReader::getCGI(std::vector<std:
     std::string type;
     std::string path;
 
-    type = split(lines.at(*i), " ")[1]; // get the cgi type
+    type = trim(split(lines.at(*i), " ")[1], "{"); // get the cgi type
     ++*i;
     while(*i < lines.size()){
+        std::string line = split(lines.at(*i)); // get the current line
+
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS
         }else if(line[0] == '}'){ // if close : BREAK
             break;
         }else{
-            type = trim(split(lines.at(*i), " ")[1]); // get the cgi path
+            type = trim(split(line, " ")[1]); // get the cgi path
         }
         ++*i;
     }
@@ -151,12 +159,14 @@ std::string NewConfigFileReader::getUpload(std::vector<std::string> lines, unsig
 
     ++*i;
     while(*i < lines.size()){
+        std::string line = split(lines.at(*i)); // get the current line
+
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS
         }else if(line[0] == '}'){ // if close : BREAK
             break;
         }else{
-            upload = trim(split(lines.at(*i), " ")[1]); // get the cgi path
+            upload = trim(split(line, " ")[1], ";"); // get the cgi path
         }
         ++*i;
     }
