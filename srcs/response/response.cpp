@@ -20,6 +20,7 @@ Response::~Response() {}
 void        Response::error(int status) {
     this->status = status;
     query.path = server.error_pages[status];
+    // getFile();
     // getFile(); // boucle infinie en 404 error vient de get
 }
 
@@ -186,7 +187,10 @@ void        Response::_options() {
 //                             
 
 void        Response::_trace() {
-    
+    status = 200;
+    content = query.full_request;
+    header.addHeader("Content-Length", std::to_string(content.size()));
+    header.addHeader("Content-Type", "message/http");
 }
 
 //                _         _     
@@ -231,7 +235,7 @@ void        Response::moveFile()
 // |_|                     
 
 void        Response::_post() {
-    status = 401;
+    status = 200;
     this->execCGI();
 }
 
@@ -355,7 +359,7 @@ string Response::render() {
     else
         execute();
 
-    std::string response(statusLine(status) + header.toString() + content);
+    std::string response(statusLine(status) + header.toString() + content + "\n\r");
 
 #ifdef DEBUG
     std::cout << "_____RESPONSE_____" << std::endl;
