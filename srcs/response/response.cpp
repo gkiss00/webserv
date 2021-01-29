@@ -231,7 +231,7 @@ void        Response::moveFile()
 // |_|                     
 
 void        Response::_post() {
-    status = 200;
+    status = 401;
     this->execCGI();
 }
 
@@ -241,7 +241,7 @@ void        Response::execCGI()
     int		fd_write_from_parent[2]; // 0 = read 1 = write
     int		fd_write_from_child[2];
 
-    if (status == 200) {
+    if (status/100 == 2) {
         pipe(fd_write_from_parent);
         pipe(fd_write_from_child);
     
@@ -256,14 +256,19 @@ void        Response::execCGI()
             dup2(fd_write_from_child[1], STDOUT_FILENO);
 
             char    *args[2];
-            args[0] = (char *)std::string("./" + this->query.path).c_str();
+            // args[0] = (char *)std::string("./" + this->query.path).c_str();
+            args[0] = (char *)std::string("/Users/corentin/Documents/Programmation/19/webserv/tests/cgi_tester").c_str();
+            std::cerr << "path = " << args[0] << std::endl;
             args[1] = NULL;
 
-            char *env[2];
+            char *env[5];
             env[0] = (char *)"REQUEST_METHOD=POST";
-            env[1] = NULL;
+            env[1] = (char *)"SERVER_PROTOCOL=HTTP/1.1";
+            env[2] = (char *)std::string("PATH_INFO=''").c_str();
+            env[3] = (char *)std::string("CONTENT_LENGHT=0").c_str();
+            env[4] = NULL;
 
-            execve(NULL, args, env);
+            execve(args[0], args, env);
             perror("execve failed: ");
             close(fd_write_from_parent[0]);
             close(fd_write_from_child[1]);
@@ -279,9 +284,9 @@ void        Response::execCGI()
             std::string request;
             char buf[1001];
             int ret;
-            int status;
-            wait(&status);
-            if (WIFEXITED(status) && WEXITSTATUS(status) == -1){
+            int child_status;
+            wait(&child_status);
+            if (WIFEXITED(child_status) && WEXITSTATUS(child_status) == -1){
                 this->content = "";
                 return ;
             } 
@@ -291,11 +296,14 @@ void        Response::execCGI()
             }
             close(fd_write_from_child[0]);
             
-            // std::cout << "---- get from child ----" << std::endl;
-            // std::cout << buff << std::endl;
-            // std::cout << "---- end ----" << std::endl;
+            std::cout << "---- get from child ----" << std::endl;
+            std::cout << request << std::endl;
+            std::cout << "---- end ----" << std::endl;
             this->content = std::string(request);
+            // this->content = "Content-Type: text/html; charset=utf-8\n\n0";
         }
+    }else{
+        this->content = "Content-Type: text/html; charset=utf-8\n\n";
     }
 }
 
@@ -347,7 +355,7 @@ string Response::render() {
     else
         execute();
 
-    std::string response(statusLine(status) + header.toString() + content + "\r\n");
+    std::string response(statusLine(status) + header.toString() + content);
 
 #ifdef DEBUG
     std::cout << "_____RESPONSE_____" << std::endl;
