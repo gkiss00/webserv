@@ -122,7 +122,17 @@ void        send_client_response(int client_socket, std::string response){
     send(client_socket, response.c_str(), response.length() + 1, 0);
 }
 
-void        close_client_socket(int client_socket){
+void        close_client_socket(unsigned int client_socket) {
+    for(unsigned int i = 0; i < servers.size(); i++)
+    {
+        for (unsigned int j = 0; j < servers[i].client_sockets.size(); ++j)
+        {
+            if (servers[i].client_sockets[j] == static_cast<int>(client_socket))
+            {
+                servers[i].client_sockets.erase(servers[i].client_sockets.begin() + j);
+            }
+        }
+    }
     FD_CLR(client_socket, &current_sockets);
     close(client_socket);
 }
@@ -140,11 +150,26 @@ void signal_handler(int signal){
 void    set_server_sockets(){
     for (unsigned int i = 0; i < servers.size(); ++i){
         servers.at(i).socket = init_server_socket("127.0.0.1", servers.at(i).listen);
-        if(servers.at(i).socket == -1){
+        if(servers.at(i).socket == -1) {
             std::cout << "Error while init server socket" << std::endl;
             exit(EXIT_FAILURE);
         }
     }
+}
+
+Server &get_good_server(unsigned int client_socket)
+{
+    for(unsigned int i = 0; i < servers.size(); i++)
+    {
+        for (unsigned int j = 0; j < servers[i].client_sockets.size(); ++j)
+        {
+            if (servers[i].client_sockets[j] == static_cast<int>(client_socket))
+            {
+                return(servers[i]);
+            }
+        }
+    }
+    return(servers[0]);
 }
 
 //ENTRY POINT
@@ -201,11 +226,10 @@ int     main(){
                         std::cout << "Body = " << request.body << std::endl;
 
                         //write
+                        
                         std::cout << "__________server_print__________" << std::endl;
-                        servers[0].print();
-                        Response response(request, servers[0]); // need to take care of all servers, but for now we focus on the 5000
+                        Response response(request, get_good_server(i)); // need to take care of all servers, but for now we focus on the 5000
                         send_client_response(i, response.render());
-
                         //close the socket
                         close_client_socket(i);
                     }
