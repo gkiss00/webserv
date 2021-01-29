@@ -5,6 +5,7 @@ Location::Location(){}
 Location::~Location(){}
 
 void Location::print(){
+    std::cout << "__________LOCATION__________" << std::endl;
     std::cout << "DIR : " << this->dir << std::endl;
     std::cout << "METHODS : ";
     for (unsigned int i = 0; i < this->methods.size(); ++i){

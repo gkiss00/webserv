@@ -36,6 +36,7 @@ class Response
     void    _patch();
 
     void    execute();
+    void    set_location();
     std::string render();
 
     private:
@@ -44,6 +45,7 @@ class Response
     ResponseHeader      header;
     int                 status;
     std::string         content;
+    unsigned int        loc;
 };
 
 #endif
