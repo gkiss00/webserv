@@ -1,13 +1,15 @@
 #include "webserv.hpp"
 
+#define CONFIG_FILE_PTAH "srcs/config/new.conf"
+
 //GLOBAL VARS
 fd_set              current_sockets; //list of all sockets
 std::vector<Server> servers;
 int                 max;
 
 void    get_server_list(){
-    ConfigFileReader cfr;
-    servers = cfr.readFile(CONFIG_FILE_PTAH);
+    NewConfigFileReader cfr;
+    servers = cfr.read(CONFIG_FILE_PTAH);
     for (unsigned int i = 0; i < servers.size(); ++i){
         servers.at(i).print();
     }

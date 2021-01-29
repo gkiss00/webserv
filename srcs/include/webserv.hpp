@@ -32,6 +32,7 @@
 # include "tools.hpp"
 # include "data.hpp"
 # include "../configFileReader/ConfigFileReader.hpp"
+# include "../configFileReader/NewConfigFileReader.hpp"
 
 using std::string;
 
