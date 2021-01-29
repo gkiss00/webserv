@@ -17,6 +17,6 @@ class Location {
         std::string upload;                 //the path to upkload files with PUT request
 
         void print();
-}
+};
 
 #endif

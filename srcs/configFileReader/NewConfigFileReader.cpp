@@ -21,6 +21,7 @@ std::vector<Server> NewConfigFileReader::read(std::string path){
             }
         }
     }
+    return servers;
 }
 
 Server  NewConfigFileReader::getServer(std::vector<std::string> lines, unsigned int *i){
@@ -61,6 +62,8 @@ std::vector<std::string> NewConfigFileReader::getMetavar(std::vector<std::string
     
     ++*i;
     while(*i < lines.size()){
+        std::string line = trim(lines.at(*i), " "); // get the current line
+        
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS
         }else if(line[0] == '}'){ // if close : BREAK
@@ -82,7 +85,7 @@ Location    NewConfigFileReader::getLocation(std::vector<std::string> lines, uns
     location.dir = split(lines.at(*i), " ")[1]; // get the DIR
     ++*i;
     while(*i < lines.size()){
-        std::string line = split(lines.at(*i)); // get the current line
+        std::string line = trim(lines.at(*i), " "); // get the current line
 
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS
@@ -115,7 +118,8 @@ std::vector<std::string> NewConfigFileReader::getMethods(std::vector<std::string
 
     ++*i;
     while(*i < lines.size()){
-        std::string line = split(lines.at(*i)); // get the current line
+        std::string line = trim(lines.at(*i), " "); // get the current line
+
 
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS
@@ -125,7 +129,6 @@ std::vector<std::string> NewConfigFileReader::getMethods(std::vector<std::string
             std::vector<std::string> args = split(line, " ");
             for (unsigned int j = 0; j < args.size(); ++j){
                 methods.push_back(trim(args.at(j), ";"));
-                ++j;
             }
         }
         ++*i;
@@ -140,7 +143,8 @@ std::pair<std::string, std::string> NewConfigFileReader::getCGI(std::vector<std:
     type = trim(split(lines.at(*i), " ")[1], "{"); // get the cgi type
     ++*i;
     while(*i < lines.size()){
-        std::string line = split(lines.at(*i)); // get the current line
+        std::string line = trim(lines.at(*i), " "); // get the current line
+
 
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS
@@ -159,7 +163,8 @@ std::string NewConfigFileReader::getUpload(std::vector<std::string> lines, unsig
 
     ++*i;
     while(*i < lines.size()){
-        std::string line = split(lines.at(*i)); // get the current line
+        std::string line = trim(lines.at(*i), " "); // get the current line
+
 
         if(line.compare("") == 0){ //if line is empty : PASS
         }else if(line[0] == '#'){ // if line is a comment : PASS

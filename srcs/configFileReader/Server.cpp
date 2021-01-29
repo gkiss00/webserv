@@ -4,9 +4,6 @@ Server::Server(){
     this->socket = -1;
     this->listen = -1;
     this->client_max_body_size = -1;
-    this->autoindex = false;
-    this->root = "";
-    this->default_file = "";
 }
 
 Server::~Server(){}

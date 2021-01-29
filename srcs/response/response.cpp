@@ -5,7 +5,7 @@
 Response::Response(RequestParser &query, Server &server)
 : query(query), server(server) {
     setAllowedMethodsHeader();
-    chdir(server.root.c_str());
+    chdir(server.locations[0].root.c_str());
 }
 
 Response::~Response() {}
@@ -31,9 +31,9 @@ std::string Response::statusLine(int status) {
 // header update
 void        Response::setAllowedMethodsHeader() {
     std::string allowed;
-    for (unsigned int i = 0; i < server.methodes.size(); ++i){
-        allowed += server.methodes.at(i);
-        if (i != server.methodes.size() - 1)
+    for (unsigned int i = 0; i < server.locations[0].methods.size(); ++i){
+        allowed += server.locations[0].methods.at(i);
+        if (i != server.locations[0].methods.size() - 1)
             allowed += ", ";
     }
     header.addHeader("Allowed-Methods", allowed);
@@ -113,14 +113,14 @@ void        Response::_get() {
         {
             if (query.path[query.path.size() - 1] != '/')
                 query.path += "/";
-            if (server.autoindex)
+            if (server.locations[0].autoindex)
             {
                 generateAutoindex();
                 status = 200;
                 return ;
             }
-            if (server.default_file != "") {
-                query.path += server.default_file;
+            if (server.locations[0].default_file != "") {
+                query.path += server.locations[0].default_file;
                 _get();
             }
         }
@@ -216,7 +216,7 @@ void        Response::_delete() {
 void        Response::moveFile()
 {
     if (status == 200) {
-        // move to bin folder when root will be
+        // move to bin folder when locations[0].root will be
         if (rename(this->query.path.c_str(), string(this->query.path + ".del").c_str()) != 0){
             perror("File moving failed: ");
         }
@@ -341,7 +341,7 @@ string Response::render() {
     if (!std::count(allImplementedMethods.begin(), allImplementedMethods.end(), query.command))
         error(501); // not implemented
 
-    else if (!std::count(server.methodes.begin(), server.methodes.end(), query.command))
+    else if (!std::count(server.locations[0].methods.begin(), server.locations[0].methods.end(), query.command))
         error(405); // not authorized
 
     else

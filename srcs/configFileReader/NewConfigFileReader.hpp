@@ -19,6 +19,6 @@ class NewConfigFileReader {
         std::vector<std::string> getMetavar(std::vector<std::string> lines, unsigned int *i);
         std::pair<std::string, std::string> getCGI(std::vector<std::string> lines, unsigned int *i);
         std::string getUpload(std::vector<std::string> lines, unsigned int *i);
-}
+};
 
 #endif

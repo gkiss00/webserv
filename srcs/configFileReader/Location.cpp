@@ -15,7 +15,7 @@ void Location::print(){
     std::cout << "AUTO_INDEX : " << this->autoindex << std::endl;
     std::cout << "DEFAULT_FILE : " << this->default_file << std::endl;
     std::cout << "CGI : ";
-    for(std::map<std::string, std::string>::std::iterator it = this->cgi.begin(); it != this->cgi.end(); ++it){
+    for(std::map<std::string, std::string>::iterator it = this->cgi.begin(); it != this->cgi.end(); ++it){
         std::cout << it->first << " : " << std::cout << it->second;
         std::cout << std::endl;
     }
