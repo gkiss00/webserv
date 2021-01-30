@@ -10,20 +10,22 @@ mkdir -p /tmp/www/YoupiBanane/Yeah
 echo not_happy.bad_extension > /tmp/www/YoupiBanane/Yeah/not_happy.bad_extension
 
 cp -R srcs/pages /tmp/pages
+cp -R srcs/cgi-bin /tmp/
 
 # /tmp
+# ├── cgi-bin
+# │   └── add.cgi
 # ├── pages
-# │   ├── cgi-bin
-# │   │   ├── add.cgi
-# │   │   └── add.html
 # │   ├── error_page
 # │   │   ├── 404.html
 # │   │   └── 500.html
 # │   └── good_page
+# │       ├── add.html
 # │       ├── bits-rain.html
 # │       ├── color-quiz.html
 # │       ├── colorclock.html
-# │       └── index.html
+# │       ├── index.html
+# │       └── magicWand.html
 # └── www
 #     └── YoupiBanane
 #         ├── Yeah

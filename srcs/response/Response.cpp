@@ -237,7 +237,12 @@ void        Response::moveFile()
 
 void        Response::_post() {
     status = 200;
-    this->execCGI();
+
+    if (server.locations[loc].cgi.count(split(query.path, ".").back()) != 0){
+        this->execCGI();
+    }else{
+        std::cerr << "---------- post do nothing  -----------" << std::endl;
+    }
 }
 
 void        Response::execCGI()
@@ -245,6 +250,30 @@ void        Response::execCGI()
     pid_t   pid;
     int		fd_write_from_parent[2]; // 0 = read 1 = write
     int		fd_write_from_child[2];
+    std::string cgi_path;
+
+    std::cerr << "---------- CGI -----------" << std::endl;
+    cgi_path = server.locations[loc].cgi[split(query.path, ".").back()];
+
+    // std::map<std::string, std::string>::iterator it = server.locations[loc].cgi.begin();
+    // std::map<std::string, std::string>::iterator ite = server.locations[loc].cgi.end();
+    // while (it != ite){
+    //     std::cerr << it->first + " and " + it->second << std::endl;
+    //     ++it;
+    // }
+    std::cerr << "---------- CGI path -----------" << std::endl;
+    std::cerr << cgi_path << std::endl;
+    std::cerr << "------------  ------------" << std::endl;
+
+    status = 404;
+
+    struct stat stats;
+    if (stat(cgi_path.c_str(), &stats) == 0)
+    {
+        if (S_ISREG(stats.st_mode)) {
+            status = 200;
+        }
+    }
 
     if (status/100 == 2) {
         pipe(fd_write_from_parent);
@@ -262,7 +291,7 @@ void        Response::execCGI()
 
             char    *args[2];
             // args[0] = (char *)std::string("./" + this->query.path).c_str();
-            args[0] = (char *)std::string("/Users/corentin/Documents/Programmation/19/webserv/tests/cgi_tester").c_str();
+            args[0] = (char *)cgi_path.c_str();
             std::cerr << "path = " << args[0] << std::endl;
             args[1] = NULL;
 
@@ -307,8 +336,6 @@ void        Response::execCGI()
             this->content = std::string(request);
             // this->content = "Content-Type: text/html; charset=utf-8\n\n0";
         }
-    }else{
-        this->content = "Content-Type: text/html; charset=utf-8\n\n";
     }
 }
 

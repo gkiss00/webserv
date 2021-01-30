@@ -153,7 +153,10 @@ std::pair<std::string, std::string> NewConfigFileReader::getCGI(std::vector<std:
         }else if(line[0] == '}'){ // if close : BREAK
             break;
         }else{
-            type = trim(split(line, " ")[1]); // get the cgi path
+            path = trim(split(line, " ")[1]); // get the cgi path
+            if (path.back() == ';'){
+                path.pop_back();
+            }
         }
         ++*i;
     }
