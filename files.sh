@@ -9,7 +9,9 @@ echo other.pouic > /tmp/www/YoupiBanane/nop/other.pouic
 mkdir -p /tmp/www/YoupiBanane/Yeah
 echo not_happy.bad_extension > /tmp/www/YoupiBanane/Yeah/not_happy.bad_extension
 
-cp -R srcs/pages /tmp/pages
+#remove previous mistake
+rm -rf /tmp/pages/pages
+cp -R srcs/pages /tmp/
 cp -R srcs/cgi-bin /tmp/
 
 # /tmp

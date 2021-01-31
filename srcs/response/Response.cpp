@@ -18,11 +18,10 @@ Response::~Response() {}
 //  \___/   |_|  |___||_____||____/ 
 //                                  
 
-void        Response::error(int status) {
-    this->status = status;
+void        Response::error(int code) {
+    this->status = code;
     query.path = server.error_pages[status];
     getFile();
-    // getFile(); // boucle infinie en 404 error vient de get
 }
 
 std::string Response::statusLine(int status) {
@@ -106,7 +105,6 @@ void        Response::generateAutoindex()
 void        Response::_get() {
     struct stat stats;
 
-    std::cout << "GETTTTTTTTTTTTTTTTT: " << query.path << std::endl;
     if (query.path == "")
         query.path = ".";
     if (stat(query.path.c_str(), &stats) == 0)
@@ -115,6 +113,8 @@ void        Response::_get() {
         {
             if (query.path[query.path.size() - 1] != '/')
                 query.path += "/";
+            if (query.path == "./")
+                query.path = "";
             if (server.locations[loc].autoindex)
             {
                 generateAutoindex();
@@ -124,6 +124,7 @@ void        Response::_get() {
             if (server.locations[loc].default_file != "") {
                 query.path += server.locations[loc].default_file;
                 _get();
+                return ;
             }
         }
         status = 200;
@@ -155,7 +156,25 @@ void        Response::_head() {
 // |_|                
 
 void        Response::_put() {
-    
+    struct stat stats;
+
+    mkdir_p(server.locations[loc].upload);
+    std::cout << server.locations[loc].upload + query.path << std::endl;
+    if (stat(query.path.c_str(), &stats) == 0) {
+        if (query.body != "") {
+            create_file(server.locations[loc].upload + query.path, query.body);
+            status = 200; // Success
+        }
+        else {
+            create_file(server.locations[loc].upload + query.path, "");
+            status = 204; // No Content
+        }
+    }
+    else {
+        create_file(server.locations[loc].upload + query.path, query.body);
+        status = 201; // Created
+    }
+    content = "\n";
 }
 
 //                                        _   
@@ -385,20 +404,14 @@ void    Response::set_location()
         std::string dir = server.locations[i].dir;
         if (dir[0] == '/')
             dir = dir.substr(1);
-        std::cout << "dir = " << dir << std::endl;
         if (!query.path.compare(0, dir.size(), dir) && dir.size() >= compatibility)
         {
             loc = i;
             compatibility = dir.size();
         }
     }
-
-    std::cout << "QP = " << query.path << std::endl;
-    std::cout << "dir = " << server.locations[loc].dir << std::endl;
     query.path = query.path.substr(server.locations[loc].dir.size() - 1);
     if (query.path[0] == '/') query.path = query.path.substr(1);
-    std::cout << "QP = " << query.path << std::endl;
-    std::cout << "LOC = " << loc << std::endl;
 }
 
 string  Response::render() {

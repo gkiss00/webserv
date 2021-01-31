@@ -11,6 +11,8 @@ std::tm* tm_date(const char* format_time);
 // FILES
 std::string file_to_string(std::string path);
 bool        is_dir(std::string path);
+void        create_file(std::string path, std::string content);
+void        mkdir_p(std::string path);
 
 // NUMBERS
 size_t width(int n);
