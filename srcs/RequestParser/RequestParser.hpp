@@ -4,8 +4,8 @@
 #include "webserv.hpp"
 
 #define URL_MAX_SIZE 2000
-#define REQUEST_MAX_SIZE 10000
-#define CONTENT_LENGHT_MAX 10000
+#define REQUEST_MAX_SIZE 1000000000
+#define CONTENT_LENGHT_MAX 1000000000
 
 class request_exception : public std::exception {
 

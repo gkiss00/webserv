@@ -29,14 +29,15 @@ void    RequestParser::parse(std::string request){
     std::string token, key, last_key;
     bool        just_1_line(false);
     bool        is_content_lenght_exists(false);
+    bool        is_chuncked(false);
 
-    // std::cout << "--------------- Raw Input ------------------" << std::endl;
-    // std::cout << request.size() << std::endl;
+    std::cout << "--------------- Raw Input ------------------" << std::endl;
+    std::cout << request.size() << std::endl;
 
     request = request.substr(0, REQUEST_MAX_SIZE);
 
     // std::cout << request << std::endl;
-    // std::cout << "---------------------------------" << std::endl;
+    std::cout << "---------------------------------" << std::endl;
 
     try{
         token = this->get_next(request, delimiter);
@@ -82,6 +83,9 @@ void    RequestParser::parse(std::string request){
                 while (isspace(token[0])){
                     token.erase(0, 1); 
                 }
+                if (key == "Transfer-Encoding" && token == "chunked"){
+                    is_chuncked = true;
+                }
                 if (key == "Content-Length"){
                     if (is_content_lenght_exists == false){
                         is_content_lenght_exists = true;
@@ -116,6 +120,33 @@ void    RequestParser::parse(std::string request){
             token = this->get_next(request, delimiter);
         }
         this->body = request;
+        if (is_chuncked){
+            std::string size_hex;
+            std::string new_body;
+            int size;
+            size_t pos;
+
+            for (size_t i = 0; i < this->body.size(); (void)i){
+                std::cout << "i = " << i << std::endl;
+                pos = this->body.find("\r\n", i);
+                if (pos != std::string::npos){
+                    size_hex = this->body.substr(i, pos);
+                }else{
+                    size_hex = this->body.substr(i, this->body.size());
+                }
+
+                std::cout << "size_hex = '" << size_hex.size() << " et " << size_hex.substr(0, 100) << "'" << std::endl;
+                size = (int)std::stol(size_hex, nullptr, 16);
+                if (size == 0){
+                    break ;
+                }
+                i += size_hex.size() + 2;
+                std::cout << "size = " << size << std::endl;
+                new_body.assign(this->body, i, size);
+                i += size + 2;
+            }
+            this->body = new_body;
+        }
     }else{
         this->body = "";
     }
