@@ -267,8 +267,10 @@ void        Response::_post() {
 void        Response::execCGI()
 {
     pid_t   pid;
-    int		fd_write_from_parent[2]; // 0 = read 1 = write
-    int		fd_write_from_child[2];
+    int     pip[2];
+    pip[0] = 0;
+    pip[1] = 1;
+    
     std::string cgi_path;
 
     std::cerr << "---------- CGI -----------" << std::endl;
@@ -295,8 +297,7 @@ void        Response::execCGI()
     }
 
     if (status/100 == 2) {
-        pipe(fd_write_from_parent);
-        pipe(fd_write_from_child);
+        pipe(pip);
     
         pid = fork();
         if (pid == -1) {
@@ -304,15 +305,24 @@ void        Response::execCGI()
             return ;
         } else if (pid == 0) {
             std::cout << "---- child ----" << std::endl;
+            close(pip[1]);
+            dup2(pip[0], 0);
+            close(pip[0]);
+            
 
-            close(fd_write_from_parent[1]);
-            close(fd_write_from_child[0]);
-            dup2(fd_write_from_parent[0], 0);
-            dup2(fd_write_from_child[1], 1);
+            //int ret = 1;
+            //char buff[1000001];
 
+            //while((ret = read(0, &buff, 1000000)) > 0){
+                //buff[ret] = '\0';
+                //std::cerr << ret << std::endl;
+            //}
+            try{
+            std::cerr << "testest1" << std::endl;
             char    *args[2];
             // args[0] = (char *)std::string("./" + this->query.path).c_str();
             args[0] = (char *)cgi_path.c_str();
+            std::cerr << "testest2" << std::endl;
             std::cerr << "path = " << args[0] << std::endl;
             args[1] = NULL;
 
@@ -337,33 +347,43 @@ void        Response::execCGI()
 
             execve(args[0], args, env);
             perror("execve failed: ");
-            close(fd_write_from_parent[0]);
-            close(fd_write_from_child[1]);
             exit(-1);
+            }catch (std::exception e){
+                std::cerr << "EXCEPTION" << std::endl;
+            }
         } else {
-            close(fd_write_from_parent[0]);
-            close(fd_write_from_child[1]);
+            //dup2(pip[0], 0);
+            close(pip[0]);
             std::cerr << "---- send to child ----" << std::endl;
-            // std::cout << this->query.body << std::endl;
-            write(fd_write_from_parent[1], this->query.body.c_str(), this->query.body.size());
-            std::cerr << "---- end writing ----" << std::endl;
+            for (unsigned int i = 0; i < this->query.body.size() / 1000000; ++i){
+                std::cout << "write" << i << std::endl;
+                write(pip[1], this->query.body.substr(i * 1000000, (i + 1) * 1000000).c_str(), this->query.body.substr(i * 1000000, (i + 1) * 1000000).size());
+                
+            }
+            //write(pip[1], this->query.body.c_str(), this->query.body.size());
             
-            close(fd_write_from_parent[1]);
+            close(pip[1]);
+            
+             
+            std::cout << "---- end writing ----" << std::endl;
 
             std::string request;
             char buf[1001];
             int ret;
             int child_status;
+            std::cout << "---- wait child to end ----" << std::endl;
             wait(&child_status);
+            std::cout << "---- child ended ----" << std::endl;
             if (WIFEXITED(child_status) && WEXITSTATUS(child_status) == -1){
                 this->content = "";
                 return ;
-            } 
-            while ((ret = read(fd_write_from_child[0], buf, 1000)) > 0){
+            }
+            std::cout << "---- read begin ----" << std::endl;
+            while ((ret = read(0, buf, 1000)) > 0){
                 buf[ret] = '\0';
                 request += buf;
             }
-            close(fd_write_from_child[0]);
+           
             
             std::cout << "---- get from child ----" << std::endl;
             std::cout << request.substr(0, 1000) << std::endl;
