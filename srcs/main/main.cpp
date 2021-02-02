@@ -224,7 +224,7 @@ int     main(){
                             for (std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
                                 std::cout << "Headers = " << it->first << " : " << it->second << std::endl;
                             }
-                            std::cout << "Body = " << request.body.substr(0, 1000) << std::endl;
+                            std::cout << "Body[" << request.body.size() << "] = " << request.body.substr(0, 1000) << std::endl;
 
                             //write
                             

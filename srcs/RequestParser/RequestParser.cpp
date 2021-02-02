@@ -36,7 +36,14 @@ void    RequestParser::parse(std::string request){
 
     request = request.substr(0, REQUEST_MAX_SIZE);
 
-    // std::cout << request << std::endl;
+    for (int i = 0; request.substr(0, 1000)[i] != '\0'; ++i){
+        if (isspace(request[i])){
+            std::cout << "\\";
+        }else{
+            std::cout << request[i];
+        }
+    }
+    request.substr(0, 1000);
     std::cout << "---------------------------------" << std::endl;
 
     try{
@@ -125,24 +132,24 @@ void    RequestParser::parse(std::string request){
             std::string new_body;
             int size;
             size_t pos;
+            size_t i = 0;
 
-            for (size_t i = 0; i < this->body.size(); (void)i){
+            while (i < this->body.size()){
+                
                 std::cout << "i = " << i << std::endl;
                 pos = this->body.find("\r\n", i);
-                if (pos != std::string::npos){
-                    size_hex = this->body.substr(i, pos);
-                }else{
-                    size_hex = this->body.substr(i, this->body.size());
-                }
+                std::cout << "pos = " << pos << std::endl;
+
+                size_hex = this->body.substr(i, pos - i);
 
                 std::cout << "size_hex = '" << size_hex.size() << " et " << size_hex.substr(0, 100) << "'" << std::endl;
                 size = (int)std::stol(size_hex, nullptr, 16);
                 if (size == 0){
                     break ;
                 }
-                i += size_hex.size() + 2;
+                i += size_hex.size() + 2;;
                 std::cout << "size = " << size << std::endl;
-                new_body.assign(this->body, i, size);
+                new_body.append(this->body, i, size);
                 i += size + 2;
             }
             this->body = new_body;

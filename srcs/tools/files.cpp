@@ -30,7 +30,7 @@ bool        is_dir(std::string path) {
 
 void        create_file(std::string path, std::string content) {
     std::cout << path << std::endl;
-    int fd = open(path.c_str(), O_WRONLY | O_APPEND | O_CREAT, 0666);
+    int fd = open(path.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
     if (fd == -1)
         return ;
     write(fd, content.c_str(), content.size());

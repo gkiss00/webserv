@@ -257,7 +257,7 @@ void        Response::moveFile()
 void        Response::_post() {
     status = 200;
 
-    if (server.locations[loc].cgi.count(split(query.path, ".").back()) != 0){
+    if (server.locations[loc].cgi.count("." + split(query.path, ".").back()) != 0){
         this->execCGI();
     }else{
         std::cerr << "---------- post do nothing  -----------" << std::endl;
@@ -272,7 +272,7 @@ void        Response::execCGI()
     std::string cgi_path;
 
     std::cerr << "---------- CGI -----------" << std::endl;
-    cgi_path = server.locations[loc].cgi[split(query.path, ".").back()];
+    cgi_path = server.locations[loc].cgi["." + split(query.path, ".").back()];
 
     // std::map<std::string, std::string>::iterator it = server.locations[loc].cgi.begin();
     // std::map<std::string, std::string>::iterator ite = server.locations[loc].cgi.end();
@@ -303,10 +303,12 @@ void        Response::execCGI()
             perror("fork failed: ");
             return ;
         } else if (pid == 0) {
+            std::cout << "---- child ----" << std::endl;
+
             close(fd_write_from_parent[1]);
             close(fd_write_from_child[0]);
-            dup2(fd_write_from_parent[0], STDIN_FILENO);
-            dup2(fd_write_from_child[1], STDOUT_FILENO);
+            dup2(fd_write_from_parent[0], 0);
+            dup2(fd_write_from_child[1], 1);
 
             char    *args[2];
             // args[0] = (char *)std::string("./" + this->query.path).c_str();
@@ -314,12 +316,24 @@ void        Response::execCGI()
             std::cerr << "path = " << args[0] << std::endl;
             args[1] = NULL;
 
+            std::string tmp("PATH_INFO=" + server.locations[loc].root + this->query.path);
+            std::cerr << "---- tmp = " << tmp << std::endl;
+
+
             char *env[5];
+            std::cerr << "---- envs 1 ----" << std::endl;
             env[0] = (char *)"REQUEST_METHOD=POST";
             env[1] = (char *)"SERVER_PROTOCOL=HTTP/1.1";
-            env[2] = (char *)std::string("PATH_INFO=''").c_str();
-            env[3] = (char *)std::string("CONTENT_LENGHT=0").c_str();
+            env[2] = (char *)strdup(tmp.c_str());
+            env[3] = (char *)std::string("CONTENT_LENGHT=" + std::to_string(this->query.body.size())).c_str();
             env[4] = NULL;
+
+            std::cerr << "---- envs ----" << std::endl;
+
+            for (int i = 0; env[i] != NULL; ++i){
+                std::cerr << "env = " << env[i] << std::endl;
+            }
+            std::cerr << "---- gonna excve ----" << std::endl;
 
             execve(args[0], args, env);
             perror("execve failed: ");
@@ -329,9 +343,11 @@ void        Response::execCGI()
         } else {
             close(fd_write_from_parent[0]);
             close(fd_write_from_child[1]);
-            // std::cout << "---- send to child ----" << std::endl;
+            std::cerr << "---- send to child ----" << std::endl;
             // std::cout << this->query.body << std::endl;
             write(fd_write_from_parent[1], this->query.body.c_str(), this->query.body.size());
+            std::cerr << "---- end writing ----" << std::endl;
+            
             close(fd_write_from_parent[1]);
 
             std::string request;
@@ -350,7 +366,7 @@ void        Response::execCGI()
             close(fd_write_from_child[0]);
             
             std::cout << "---- get from child ----" << std::endl;
-            std::cout << request << std::endl;
+            std::cout << request.substr(0, 1000) << std::endl;
             std::cout << "---- end ----" << std::endl;
             this->content = std::string(request);
             // this->content = "Content-Type: text/html; charset=utf-8\n\n0";
@@ -429,8 +445,8 @@ string  Response::render() {
     std::string response(statusLine(status) + header.toString() + content + (content == "" ? "" : ""));
 
 #ifdef DEBUG
-    std::cout << "_____RESPONSE_____" << std::endl;
-    std::cout << response;
+    std::cout << "_____RESPONSE_____ [" << response.size() << "]" << std::endl;
+    std::cout << response.substr(0, 1000);
     std::cout << "_____        _____" << std::endl;
 #endif
 
