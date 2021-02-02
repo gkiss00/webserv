@@ -361,8 +361,8 @@ void        Response::execCGI()
             } 
             this->content = file_to_string("/tmp/www/test.txt"); //read file
             unlink("/tmp/www/test.txt"); //delete file
+            header.addHeader("Content-Length", "100000000");
             std::cout << "---- end ----" << std::endl;
-            // this->content = "Content-Type: text/html; charset=utf-8\n\n0";
         }
     }
 }
