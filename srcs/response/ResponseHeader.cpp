@@ -32,7 +32,7 @@ std::string ResponseHeader::toString() {
     {
         if ((*it).second == "")
             continue ;
-        str += ((*it).first + ": " + (*it).second + "\n");
+        str += ((*it).first + ": " + (*it).second + "\r\n");
     }
     return str;
 }
