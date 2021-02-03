@@ -28,12 +28,10 @@ std::string index_date(struct tm*  time) {
 // from "Fri, 31 Dec 1999 23:59:59 GMT" to struct tm
 
 struct tm* tm_date(const char* format_time) {
-    struct tm *   time;
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    struct tm *   time = localtime(&t.tv_sec);
 
     strptime(format_time, "%a, %d %b %Y %T GMT", time);
     return time;
-}
-
-int main() {
-    std::cout << string_date() << std::endl;
 }
