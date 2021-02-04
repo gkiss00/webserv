@@ -396,7 +396,9 @@ void        Response::execCGI()
             } 
             this->content = file_to_string("/tmp/www/test.txt"); //read file
             unlink("/tmp/www/test.txt"); //delete file
-            header.addHeader("Content-Length", "100000000");
+            std::vector<string> ttt = split(content, "\r\n");
+            std::cout << ttt.at(ttt.size() - 1).size() << std::endl;
+            header.addHeader("Content-Length", std::to_string(ttt.at(ttt.size() - 1).size()));
             std::cout << "---- end ----" << std::endl;
         }
     }
