@@ -78,6 +78,11 @@ int     accept_new_connexion(int server_socket)
         std::cout << "Connexion with client failed." << std::endl;
         return (-1);
     }
+    if (configure_non_bloking(client_socket) == -1){
+        perror("Non blocking failed, quitting: ");
+        close(client_socket);
+        return (-1);
+    }
 #ifdef DEBUG
     std::cout << "Connexion with client succeed." << std::endl;
 #endif
@@ -145,6 +150,7 @@ void        send_client_response(int client_socket, std::string response){
 #endif
             break;
         }
+        usleep(1000);
     }
 }
 
