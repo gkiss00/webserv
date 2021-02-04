@@ -119,9 +119,7 @@ std::string     get_client_request(int client_socket){
 
 //SEND THE RESPONSE TO THE CLIENT
 void        send_client_response(int client_socket, std::string response){
-    for (unsigned int i = 0; i < (response.size() / 10000) + 1; ++i){
-        send(client_socket, response.substr(i * 10000, (i + 1) * 10000).c_str(), 10000 + 1, 0);
-    }
+    send(client_socket, response.c_str(), response.size(), 0);
 }
 
 void        close_client_socket(unsigned int client_socket) {

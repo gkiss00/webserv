@@ -264,6 +264,53 @@ void        Response::_post() {
     }
 }
 
+std::string Response::format(std::string str)
+{
+    std::string ret = "HTTP_";
+
+    std::replace(str.begin(), str.end(), '-', '_');
+    for (int i = 0; i < (int)str.size(); ++i){
+        ret += toupper(str[i]);
+    }
+    return (ret);
+}
+
+char        **Response::get_cgi_env(){
+    char **env = (char **)malloc(100 * sizeof(char *));
+    int i = 0;
+
+    std::cerr << "---- get_cgi_env ----" << std::endl;
+
+    env[i++] = strdup("REQUEST_METHOD=POST");
+    env[i++] = strdup("SERVER_PROTOCOL=HTTP/1.1");
+    // Because you wont call the cgi directly use the full path as PATH_INFO
+    env[i++] = strdup(("PATH_INFO=" + server.locations[loc].root + this->query.path).c_str());
+    env[i++] = strdup(std::string("CONTENT_LENGTH=" + std::to_string(this->query.body.size())).c_str());
+
+    env[i++] = strdup("AUTH_TYPE=''");
+    env[i++] = strdup("CONTENT_TYPE=test/file");
+    env[i++] = strdup("GATEWAY_INTERFACE=CGI/révision");
+    env[i++] = strdup((std::string("PATH_TRANSLATED=") + server.locations[loc].root + this->query.path).c_str());
+    env[i++] = strdup("QUERY_STRING=''");
+    env[i++] = strdup("REMOTE_ADDR=''");
+    env[i++] = strdup("REMOTE_IDENT=''");
+    env[i++] = strdup("REMOTE_USER=''");
+    env[i++] = strdup("REQUEST_URI=/directory/youpi.bla");
+    env[i++] = strdup("SERVER_NAME=''");
+    env[i++] = strdup("SCRIPT_NAME=/tmp/cgi-bin/cgi_tester");
+    env[i++] = strdup("SERVER_PORT=5000");
+    env[i++] = strdup("SERVER_SOFTWARE=HTTP/1.1");
+
+    std::map<std::string, std::string>::iterator it = this->query.headers.begin();
+    std::map<std::string, std::string>::iterator ite = this->query.headers.end();
+    while (it != ite){
+        env[i++] = strdup(std::string(format(it->first) + "=" + it->second).c_str());
+        ++it;
+    }
+    env[i++] = NULL;
+    return (env);
+}
+
 void        Response::execCGI()
 {
     pid_t   pid;
@@ -271,10 +318,8 @@ void        Response::execCGI()
     pip[0] = 0;
     pip[1] = 1;
     
-    std::string cgi_path;
-
     std::cerr << "---------- CGI -----------" << std::endl;
-    cgi_path = server.locations[loc].cgi["." + split(query.path, ".").back()];
+    std::string cgi_path = server.locations[loc].cgi["." + split(query.path, ".").back()];
 
     // std::map<std::string, std::string>::iterator it = server.locations[loc].cgi.begin();
     // std::map<std::string, std::string>::iterator ite = server.locations[loc].cgi.end();
@@ -304,29 +349,17 @@ void        Response::execCGI()
             perror("fork failed: ");
             return ;
         } else if (pid == 0) {
-            std::cout << "---- child ----" << std::endl;
+            std::cerr << "---- child ----" << std::endl;
             close(pip[1]); //close fd write pipe
             dup2(pip[0], 0); //redirect pipe read to 0
             close(pip[0]); // close pipe read
 
-            std::cerr << "testest1" << std::endl;
             char    *args[2];
             args[0] = (char *)cgi_path.c_str();
-            std::cerr << "testest2" << std::endl;
             std::cerr << "path = " << args[0] << std::endl;
             args[1] = NULL;
 
-            std::string tmp("PATH_INFO=" + server.locations[loc].root + this->query.path);
-            std::cerr << "---- tmp = " << tmp << std::endl;
-
-
-            char *env[5];
-            std::cerr << "---- envs 1 ----" << std::endl;
-            env[0] = (char *)"REQUEST_METHOD=POST";
-            env[1] = (char *)"SERVER_PROTOCOL=HTTP/1.1";
-            env[2] = (char *)strdup(tmp.c_str());
-            env[3] = (char *)std::string("CONTENT_LENGHT=" + std::to_string(this->query.body.size())).c_str();
-            env[4] = NULL;
+            char    **env = get_cgi_env();
 
             std::cerr << "---- envs ----" << std::endl;
 
@@ -341,6 +374,7 @@ void        Response::execCGI()
             else{
                 dup2(fd, 1);
                 dup2(fd, 2);
+                chdir("/tmp/cgi-bin/");
                 execve(args[0], args, env);
             }
             perror("execve failed: ");
@@ -435,7 +469,7 @@ string  Response::render() {
     else
         execute();
 
-    std::string response(statusLine(status) + header.toString() + content + (content == "" ? "" : ""));
+    std::string response(statusLine(status) + header.toString() + content + "\n");
 
 #ifdef DEBUG
     std::cout << "_____RESPONSE_____ [" << response.size() << "]" << std::endl;

@@ -136,19 +136,19 @@ void    RequestParser::parse(std::string request){
 
             while (i < this->body.size()){
                 
-                std::cout << "i = " << i << std::endl;
+                // std::cout << "i = " << i << std::endl;
                 pos = this->body.find("\r\n", i);
-                std::cout << "pos = " << pos << std::endl;
+                // std::cout << "pos = " << pos << std::endl;
 
                 size_hex = this->body.substr(i, pos - i);
 
-                std::cout << "size_hex = '" << size_hex.size() << " et " << size_hex.substr(0, 100) << "'" << std::endl;
+                // std::cout << "size_hex = '" << size_hex.size() << " et " << size_hex.substr(0, 100) << "'" << std::endl;
                 size = (int)std::stol(size_hex, nullptr, 16);
                 if (size == 0){
                     break ;
                 }
                 i += size_hex.size() + 2;;
-                std::cout << "size = " << size << std::endl;
+                // std::cout << "size = " << size << std::endl;
                 new_body.append(this->body, i, size);
                 i += size + 2;
             }
