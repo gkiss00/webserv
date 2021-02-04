@@ -435,13 +435,12 @@ string  Response::render() {
     else
         execute();
 
-    std::string response(statusLine(status) + header.toString() + content + (content == "" ? "" : ""));
+    std::string response(statusLine(status) + header.toString() + content + (content == "" ? "" : "") + "\n");
 
 #ifdef DEBUG
     std::cout << "_____RESPONSE_____ [" << response.size() << "]" << std::endl;
     std::cout << response.substr(0, 1000);
     std::cout << "_____        _____" << std::endl;
 #endif
-
     return response;
 }
