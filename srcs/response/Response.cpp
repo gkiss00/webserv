@@ -41,17 +41,6 @@ void        Response::setAllowedMethodsHeader() {
     header.addHeader("Allowed-Methods", allowed);
 }
 
-void        Response::getFile() {
-    struct stat stats;
-
-    content = "\n" + file_to_string(query.path);
-    stat(query.path.c_str(), &stats);
-    header.addHeader("Content-Length", std::to_string(content.size()));
-    header.addHeader("Last-Modified", string_date(gmtime(&stats.st_ctime)));
-    header.addHeader("Content-Location", query.path);
-    header.addHeader("Content-Type", fileExtension()[query.path.substr(query.path.find_last_of(".") + 1)]);
-}
-
 //  __  __  _____  _____  _   _   ___   ____   ____  
 // |  \/  || ____||_   _|| | | | / _ \ |  _ \ / ___| 
 // | |\/| ||  _|    | |  | |_| || | | || | | |\___ | 
@@ -65,6 +54,17 @@ void        Response::getFile() {
 // | (_| ||  __/| |_ 
 //  \__, | \___| \__|
 //  |___/            
+
+void        Response::getFile() {
+    struct stat stats;
+
+    content = "\n" + file_to_string(query.path) + "\n";
+    stat(query.path.c_str(), &stats);
+    header.addHeader("Content-Length", std::to_string(content.size() - 1));
+    header.addHeader("Last-Modified", string_date(gmtime(&stats.st_ctime)));
+    header.addHeader("Content-Location", query.path);
+    header.addHeader("Content-Type", fileExtension()[query.path.substr(query.path.find_last_of(".") + 1)]);
+}
 
 void        Response::generateAutoindex()
 {
@@ -95,12 +95,11 @@ void        Response::generateAutoindex()
             for (size_t i = 0; i < 20 - ((is_dir(query.path + filename)) ? 1 : width(stats.st_size)); i++)
                 content += ' ';
             content += (is_dir(filename)) ? "-" : std::to_string(stats.st_size);
-            content += "\n";
         }
         closedir (dir);
     }
-    content += "</pre><hr></body>\n</html>\n";
-    header.addHeader("Content-Length", std::to_string(content.size()));
+    content += "</pre><hr></body>\n</html>\n\n";
+    header.addHeader("Content-Length", std::to_string(content.size() - 1)); // -1 for the preceding \n
 }
 
 void        Response::_get() {
@@ -265,9 +264,10 @@ void        Response::_post() {
         std::cout << "." + split(query.path, ".").back() << std::endl;
         this->execCGI();
     } else if (query.body.size() == 0) {
-        error(204);
+        std::cout << "ERROR\n";
+        error(201);
     } else {
-        error(400);
+        error(201);
     }
 }
 
@@ -401,7 +401,7 @@ void        Response::execCGI()
                 this->content = "";
                 return ;
             } 
-            this->content = file_to_string("/tmp/www/test.txt"); //read file
+            this->content = file_to_string("/tmp/www/test.txt"); //read file 
             unlink("/tmp/www/test.txt"); //delete file
             std::vector<string> ttt = split(content, "\r\n");
             std::cout << ttt.at(ttt.size() - 1).size() << std::endl;
@@ -480,7 +480,7 @@ string  Response::render() {
         execute();
 
     std::cout << "_____PRE_RESPONSE_____ [" << "]" << std::endl;
-    std::string response(statusLine(status) + header.toString() + content + "\n");
+    std::string response(statusLine(status) + header.toString() + content);
 
 #ifdef DEBUG
     std::cout << "_____RESPONSE_____ [" << response.size() << "]" << std::endl;

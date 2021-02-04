@@ -121,15 +121,16 @@ std::string     get_client_request(int client_socket){
 void        send_client_response(int client_socket, std::string response){
     while(response != ""){
         int ret = send(client_socket, response.c_str(), response.size(), 0);
-        if (ret < 0)
+        if (ret < 0){
             std::cout << "bad bad bad" << std::endl;
-        else if (ret != (int)response.size()){
+        }else if (ret != (int)response.size()){
             response = response.substr(ret, response.size() - ret);
-            std::cout << "MHHHHHHHH " << ret << std::endl;
+            std::cout << "- " << ret << std::endl;
         }else{
             std::cout << "good good good " << std::endl;
             break;
         }
+        usleep(1000);
     }
 }
 
