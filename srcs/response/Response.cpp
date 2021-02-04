@@ -471,7 +471,7 @@ string  Response::render() {
         execute();
 
 
-    std::string response(statusLine(status) + header.toString() + content + "\r\n");
+    std::string response(statusLine(status) + header.toString() + content + "\n");
 
 #ifdef DEBUG
     std::cout << "_____RESPONSE_____ [" << response.size() << "]" << std::endl;
