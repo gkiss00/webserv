@@ -21,6 +21,7 @@ Response::~Response() {}
 void        Response::error(int code) {
     this->status = code;
     query.path = server.error_pages[status];
+    this->content = "error" + std::to_string(code) + "\n";
     getFile();
 }
 
@@ -257,10 +258,16 @@ void        Response::moveFile()
 void        Response::_post() {
     status = 200;
 
-    if (server.locations[loc].cgi.count("." + split(query.path, ".").back()) != 0){
+    std::cout << query.path << std::endl;
+    std::cout << loc << std::endl;
+    std::cout << split(query.path, ".").size() << std::endl;
+    if (split(query.path, ".").size() != 0 && server.locations[loc].cgi.count("." + split(query.path, ".").back()) != 0){
+        std::cout << "." + split(query.path, ".").back() << std::endl;
         this->execCGI();
-    }else{
-        std::cerr << "---------- post do nothing  -----------" << std::endl;
+    } else if (query.body.size() == 0) {
+        error(204);
+    } else {
+        error(400);
     }
 }
 
@@ -472,7 +479,7 @@ string  Response::render() {
     else
         execute();
 
-
+    std::cout << "_____PRE_RESPONSE_____ [" << "]" << std::endl;
     std::string response(statusLine(status) + header.toString() + content + "\n");
 
 #ifdef DEBUG
