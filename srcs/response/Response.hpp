@@ -22,6 +22,8 @@ class Response
     void    setAllowedMethodsHeader();
     void    execCGI();
     void    generateAutoindex();
+    std::string format(std::string str);
+    char    **get_cgi_env();
     // void    digestPath();
 
     // commands
