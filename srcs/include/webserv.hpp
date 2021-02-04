@@ -36,6 +36,8 @@
 # include "../configFileReader/Server.hpp"
 # include "../configFileReader/Location.hpp"
 
+// #define DEBUG 1
+
 using std::string;
 
 extern std::vector<Server>  servers;

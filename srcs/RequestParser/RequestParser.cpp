@@ -31,11 +31,14 @@ void    RequestParser::parse(std::string request){
     bool        is_content_lenght_exists(false);
     bool        is_chuncked(false);
 
+#ifdef DEBUG
     std::cout << "--------------- Raw Input ------------------" << std::endl;
     std::cout << request.size() << std::endl;
+#endif
 
     request = request.substr(0, REQUEST_MAX_SIZE);
-
+    
+#ifdef DEBUG
     for (int i = 0; request.substr(0, 1000)[i] != '\0'; ++i){
         if (isspace(request[i])){
             std::cout << "\\";
@@ -43,8 +46,8 @@ void    RequestParser::parse(std::string request){
             std::cout << request[i];
         }
     }
-    request.substr(0, 1000);
     std::cout << "---------------------------------" << std::endl;
+#endif
 
     try{
         token = this->get_next(request, delimiter);

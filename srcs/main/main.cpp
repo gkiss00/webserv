@@ -46,7 +46,9 @@ int     init_server_socket(std::string host, int port)
         close(server_socket);
         return (-1);
     }
+#ifdef DEBUG
     std::cout << "Bind #" << server_socket <<  " succeed." << std::endl;
+#endif
     if (configure_non_bloking(server_socket) == -1){
         perror("Non blocking failed, quitting: ");
         close(server_socket);
@@ -76,7 +78,9 @@ int     accept_new_connexion(int server_socket)
         std::cout << "Connexion with client failed." << std::endl;
         return (-1);
     }
+#ifdef DEBUG
     std::cout << "Connexion with client succeed." << std::endl;
+#endif
     return (client_socket);
 }
 
@@ -91,7 +95,9 @@ int     add_new_client(int server_socket)
         std::cout << "Could not add a new client." << std::endl;
         return -1;
     }
+#ifdef DEBUG
     std::cout << "Client #" << client_socket <<  " has been added to the server." << std::endl;
+#endif
     FD_SET(client_socket, &current_sockets);
     if(client_socket > max)
         max = client_socket + 1;
@@ -112,8 +118,11 @@ std::string     get_client_request(int client_socket){
     while ((ret = recv(client_socket, buf, 1000000, 0)) > 0){
         buf[ret] = '\0';
         request += buf;
-        usleep(1000);
-    }    
+        usleep(100);
+    }
+    // if (ret == -1){
+    //     throw request_exception("recv fail", 500);
+    // }
     return (request);
 }
 
@@ -121,13 +130,19 @@ std::string     get_client_request(int client_socket){
 void        send_client_response(int client_socket, std::string response){
     while(response != ""){
         int ret = send(client_socket, response.c_str(), response.size(), 0);
-        if (ret < 0)
+        if (ret < 0){
+#ifdef DEBUG
             std::cout << "bad bad bad" << std::endl;
-        else if (ret != (int)response.size()){
+#endif
+        }else if (ret != (int)response.size()){
             response = response.substr(ret, response.size() - ret);
+#ifdef DEBUG
             std::cout << "MHHHHHHHH " << ret << std::endl;
+#endif
         }else{
+#ifdef DEBUG
             std::cout << "good good good " << std::endl;
+#endif
             break;
         }
     }
@@ -186,7 +201,7 @@ Server &get_good_server(unsigned int client_socket)
 //ENTRY POINT
 int     main(){
     fd_set  copy;
-    int     socket_count;
+    int     socket_count, compteur_de_requetes = 0;
 
     signal(SIGINT, signal_handler); 
     //read the config file
@@ -210,7 +225,9 @@ int     main(){
         copy = current_sockets;
         //select
         if((socket_count = select(max + 1, &copy, NULL, NULL, NULL)) == -1){
+#ifdef DEBUG
             std::cout << "Select error, quitting." << std::endl;
+#endif
         }else{
             //for each fd
             for (int i = 0; i <= max; ++i){
@@ -218,28 +235,32 @@ int     main(){
                 if (FD_ISSET(i, &copy)){
                     //accept new connexion
                     if (isServerSocket(i)){
+#ifdef DEBUG
                         std::cout << "new connexion" << std::endl;
+#endif
                         //accept
                         add_new_client(i);
                     //get action from client
                     }else{
-                        std::cout << "new request" << std::endl;
-
+                        std::cout << "[" << compteur_de_requetes++ << "]" << std::endl;
                         //read
                         try{
                             RequestParser   request(get_client_request(i));
-                            std::cout << "__________client_request__________" << std::endl;
-                            std::cout << "Command = " << request.command << std::endl;
-                            std::cout << "Path = " << request.path << std::endl;
-                            std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
-                            for (std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
-                                std::cout << "Headers = " << it->first << " : " << it->second << std::endl;
-                            }
-                            std::cout << "Body[" << request.body.size() << "] = " << request.body.substr(0, 1000) << std::endl;
 
-                            //write
-                            
-                            std::cout << "__________server_print__________" << std::endl;
+                            if (compteur_de_requetes >= 98000){
+                                std::cout << "__________client_request__________" << std::endl;
+                                std::cout << "Command = " << request.command << std::endl;
+                                std::cout << "Path = " << request.path << std::endl;
+                                std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
+                                for (std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
+                                    std::cout << "Headers = " << it->first << " : " << it->second << std::endl;
+                                }
+                                std::cout << "Body[" << request.body.size() << "] = " << request.body.substr(0, 1000) << std::endl;
+                                
+                                //write
+                                std::cout << "__________server_print__________" << std::endl;
+                            }
+
                             Response response(request, get_good_server(i)); // need to take care of all servers, but for now we focus on the 5000
                             send_client_response(i, response.render());
                         }catch(request_exception &e){

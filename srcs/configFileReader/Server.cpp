@@ -9,6 +9,7 @@ Server::Server(){
 Server::~Server(){}
 
 void    Server::print(){
+#ifdef DEBUG
     std::cout << "SOCKET : " << socket << std::endl;
     std::cout << "PORT : " << listen << std::endl;
     std::cout << "SERVER_NAMES : ";
@@ -33,5 +34,5 @@ void    Server::print(){
         locations.at(i).print();
     }
     std::cout << std::endl;
-
+#endif
 }

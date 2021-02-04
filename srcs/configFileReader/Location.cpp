@@ -5,6 +5,7 @@ Location::Location(){}
 Location::~Location(){}
 
 void Location::print(){
+#ifdef DEBUG
     std::cout << "__________LOCATION__________" << std::endl;
     std::cout << "DIR : " << this->dir << std::endl;
     std::cout << "METHODS : ";
@@ -22,4 +23,5 @@ void Location::print(){
     }
     std::cout << std::endl;
     std::cout << "UPLOAD : " << this->upload << std::endl;
+#endif
 }
