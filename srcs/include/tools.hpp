@@ -1,12 +1,13 @@
 #ifndef TOOLS_HPP
 # define TOOLS_HPP
 # define DIRECTORY_STATS 040000
+# include <vector>
 
 // DATE
 std::string string_date();
-std::string string_date(std::tm*  time);
-std::string index_date(std::tm*  time);
-std::tm* tm_date(const char* format_time);
+std::string string_date(tm*  time);
+std::string index_date(tm*  time);
+tm*         tm_date(const char* format_time);
 
 // FILES
 std::string file_to_string(std::string path);

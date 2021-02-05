@@ -24,7 +24,8 @@ class request_exception : public std::exception {
         return this->_error_status;
     }
 
-    ~request_exception() _NOEXCEPT {}
+    // ~request_exception() _NOEXCEPT {}
+    ~request_exception() {}
 
     private:
     int         _error_status;

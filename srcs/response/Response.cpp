@@ -505,7 +505,7 @@ string  Response::render() {
     else
         execute();
 
-    std::string response(statusLine(status) + header.toString() + content + "\n");
+    std::string response(statusLine(status) + header.toString() + content);
 
 #ifdef DEBUG
     std::cerr << "_____RESPONSE_____ [" << response.size() << "]" << std::endl;
