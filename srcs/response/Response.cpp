@@ -363,17 +363,21 @@ void        Response::execCGI()
     if (status/100 == 2) {
         pipe(pip);
     
+        int fd = open("/tmp/www/test.txt", O_CREAT | O_WRONLY | O_TRUNC, 0666);
         pid = fork();
         if (pid == -1) {
-            perror("fork failed: ");
+            perror("fork");
+            close(fd);
             return ;
         } else if (pid == 0) {
 #ifdef DEBUG
             std::cerr << "---- child ----" << std::endl;
 #endif
-            close(pip[1]); //close fd write pipe
+            if (close(pip[1]) < 0) //close writing pipe
+                perror("closing write pipe child");
             dup2(pip[0], 0); //redirect pipe read to 0
-            close(pip[0]); // close pipe read
+            if (close(pip[0]) < 0) //close reading pipe
+                perror("closing read pipe child");
 
             char    *args[2];
             args[0] = (char *)cgi_path.c_str();
@@ -391,37 +395,37 @@ void        Response::execCGI()
             }
             std::cerr << "---- gonna excve ----" << std::endl;
 #endif
-            int fd = open("/tmp/www/test.txt", O_CREAT | O_WRONLY | O_TRUNC, 0666);
             if (fd < 0){
-#ifdef DEBUG
-                std::cerr << "ERROR" << std::endl;
-#endif
+                perror("/tmp/www/test.txt");
             }else{
                 dup2(fd, 1);
-                dup2(fd, 2);
                 chdir("/tmp/cgi-bin/");
                 execve(args[0], args, env);
             }
             perror("execve failed: ");
             exit(-1);
         } else {
-            close(pip[0]); //close reading pipe
+            if (close(pip[0]) < 0) //close reading pipe
+                perror("closing read pipe");
             write(pip[1], this->query.body.c_str(), this->query.body.size());
-            close(pip[1]); //close wrting pipe
+            if (close(pip[1]) < 0) //close wrting pipe
+                perror("closing write pipe");
 
             std::string request;
             int child_status;
 #ifdef DEBUG
             std::cerr << "---- wait child to end ----" << std::endl;
 #endif
-            wait(&child_status);
+            waitpid(pid, &child_status, 0);
 #ifdef DEBUG
             std::cerr << "---- child ended ----" << std::endl;
 #endif
+            if (close(fd) < 0)
+                perror("closing tmp");
             if (WIFEXITED(child_status) && WEXITSTATUS(child_status) == -1){
                 this->content = "";
                 return ;
-            } 
+            }
             this->content = file_to_string("/tmp/www/test.txt"); //read file 
             unlink("/tmp/www/test.txt"); //delete file
             std::vector<string> ttt = split(content, "\r\n");
@@ -505,7 +509,7 @@ string  Response::render() {
     else
         execute();
 
-    std::string response(statusLine(status) + header.toString() + content + "\n");
+    std::string response(statusLine(status) + header.toString() + content);
 
 #ifdef DEBUG
     std::cerr << "_____RESPONSE_____ [" << response.size() << "]" << std::endl;

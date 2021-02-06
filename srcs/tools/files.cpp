@@ -3,16 +3,20 @@
 std::string file_to_string(std::string path) {
     std::string content = "";
     int ret;
-    char buf[257];
+    char buf[256];
 
     int fd = open(path.c_str(), O_RDONLY);
-    if (fd == -1)
+    if (fd == -1){
+        perror("open RDONLY");
         return content;
-    while ((ret = read(fd, buf, 256)))
+    }
+    while ((ret = read(fd, buf, 255)) > 0)
     {
         buf[ret] = '\0';
         content += buf;
     }
+    if (ret == -1)
+        perror("read file_to_string");
     close(fd);
     return content;
 }

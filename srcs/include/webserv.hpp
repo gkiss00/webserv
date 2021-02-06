@@ -35,6 +35,7 @@
 # include "../configFileReader/NewConfigFileReader.hpp"
 # include "../configFileReader/Server.hpp"
 # include "../configFileReader/Location.hpp"
+# include "../main/MyWebServer.hpp"
 
 // #define DEBUG 1
 

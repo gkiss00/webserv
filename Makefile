@@ -1,4 +1,5 @@
 SRCS =	srcs/main/main.cpp \
+		srcs/main/MyWebServer.cpp \
 		srcs/requestParser/RequestParser.cpp \
 		srcs/data/status_codes.cpp \
 		srcs/data/implemented_methods.cpp \
