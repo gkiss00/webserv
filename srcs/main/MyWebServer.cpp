@@ -1,4 +1,5 @@
 #include "MyWebServer.hpp"
+#define PRINT(x) std::cout << x << std::endl;
 
 // Based on https://www.csd.uoc.gr/~hy556/material/tutorials/cs556-3rd-tutorial.pdf
 // https://www.tenouk.com/Module41a.html
@@ -70,7 +71,6 @@ int     MyWebServer::_send(int sock, std::string msg) {
         int ret = send(sock, msg.c_str(), msg.size(), 0);
         if (ret < 0) {
             std::cout << "bad bad bad" << std::endl;
-            usleep(100000);
         } else if (ret != (int)msg.size()) {
             msg = msg.substr(ret);
             tot += ret;
@@ -86,13 +86,16 @@ int     MyWebServer::_send(int sock, std::string msg) {
 // RECV
 std::string    MyWebServer::_recv(int sock) {
     std::string request;
-    char        buf[1000001];
+    char        buf[100001];
     int         ret;
 
-    while ((ret = recv(sock, buf, 1000000, 0)) != -1) {
+    while ((ret = recv(sock, buf, 100000, 0)) > 0) {
         buf[ret] = '\0';
         request += buf;
-        usleep(1000);
+        if ((request.find("\r\n\r\n") != std::string::npos && request.find("chunked") == std::string::npos) || // we find that it is not chunked
+            request.find("0\r\n\r\n") != std::string::npos) {
+           break ;
+        }
     }
     if (ret == -1) perror("recv");
     return request;
@@ -140,18 +143,17 @@ void    MyWebServer::run() {
         }
 
         // because select is destructive
-        fd_set ready_sockets = current_sockets;
-
-        if (select(max + 1, &ready_sockets, NULL, NULL, NULL) == -1) {
+        PRINT("select")
+        if (select(max + 1, &current_sockets, NULL, NULL, NULL) == -1) {
             std::cout << "select failed" << std::endl;
             break ;
         }
 
         // Check for internal
-        for (int fd = 2; fd <= max; ++fd) {
+        for (int fd = 0; fd <= max; ++fd) {
 
             //if the fd is in the set
-            if (FD_ISSET(fd, &ready_sockets)) {
+            if (FD_ISSET(fd, &current_sockets)) {
                 
                 // ADD THE CLIENT
                 if (std::count(this->server_sockets.begin(), this->server_sockets.end(), fd)) {
@@ -165,10 +167,12 @@ void    MyWebServer::run() {
                 // HANDLE THE CLIENT
                 else {
                     try {
+                        PRINT("recv")
                         RequestParser   request(_recv(fd));
                         Response response(request, server_from_fd(client_server[fd]));
+                        PRINT("send")
                         _send(fd, response.render());
-                        FD_CLR(fd, &ready_sockets);
+                        FD_CLR(fd, &current_sockets);
                     } catch(request_exception &e) {
                         // bad message
                         std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
@@ -187,15 +191,7 @@ void    MyWebServer::run() {
         {
             std::cout << "HARD RESET" << std::endl;
             for (size_t i = 0; i < server_sockets.size(); ++i) {
-                int temp;
-                socklen_t length = sizeof(int);
-                int rc = getsockopt(server_sockets[i], SOL_SOCKET, SO_ERROR, &temp, &length);
-                if (rc == 0) {
-                    errno = temp;
-                    perror("SO_ERROR was");
-                }
-
-                close(server_sockets[i]);
+                if (close(server_sockets[i]) < 0) perror("close main connection");
                 FD_CLR(server_sockets[i], &current_sockets);
             }
             server_sockets.clear();

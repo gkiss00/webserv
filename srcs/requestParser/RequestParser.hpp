@@ -24,7 +24,11 @@ class request_exception : public std::exception {
         return this->_error_status;
     }
 
+#ifdef __APPLE__
     ~request_exception() _NOEXCEPT {}
+#else
+    ~request_exception() {}
+#endif
 
     private:
     int         _error_status;
