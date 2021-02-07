@@ -1,5 +1,4 @@
 #include "MyWebServer.hpp"
-#define PRINT(x) std::cout << x << std::endl;
 
 // Based on https://www.csd.uoc.gr/~hy556/material/tutorials/cs556-3rd-tutorial.pdf
 // https://www.tenouk.com/Module41a.html
@@ -71,6 +70,7 @@ int     MyWebServer::_send(int sock, std::string msg) {
         int ret = send(sock, msg.c_str(), msg.size(), 0);
         if (ret < 0) {
             std::cout << "bad bad bad" << std::endl;
+            usleep(1000);
         } else if (ret != (int)msg.size()) {
             msg = msg.substr(ret);
             tot += ret;
@@ -96,6 +96,7 @@ std::string    MyWebServer::_recv(int sock) {
             request.find("0\r\n\r\n") != std::string::npos) {
            break ;
         }
+        usleep(100);
     }
     if (ret == -1) perror("recv");
     return request;
@@ -143,7 +144,7 @@ void    MyWebServer::run() {
         }
 
         // because select is destructive
-        PRINT("select")
+        
         if (select(max + 1, &current_sockets, NULL, NULL, NULL) == -1) {
             std::cout << "select failed" << std::endl;
             break ;
@@ -160,17 +161,19 @@ void    MyWebServer::run() {
                     int client_sock = accept_client(fd);
                     client_server[client_sock] = fd;
                     if (client_sock > max) max = client_sock;
-                    FD_SET(client_sock, &current_sockets);
+                    // FD_SET(client_sock, &current_sockets);
                     std::cout << "client #" << client_sock << " connected to #" << fd << std::endl;
+                    usleep(10000);
                 }
 
                 // HANDLE THE CLIENT
+                
                 else {
                     try {
-                        PRINT("recv")
+                        
                         RequestParser   request(_recv(fd));
                         Response response(request, server_from_fd(client_server[fd]));
-                        PRINT("send")
+                        
                         _send(fd, response.render());
                         FD_CLR(fd, &current_sockets);
                     } catch(request_exception &e) {
