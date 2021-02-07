@@ -24,14 +24,17 @@ int    MyWebServer::new_socket(const char *host, int port) {
     bzero(&addrServer, sizeof(addrServer));
     //fill the struct the server socket will refere to
     addrServer.sin_addr.s_addr = inet_addr(host);     //HOST
-    addrServer.sin_family = AF_INET;                  //IPV4
+    addrServer.sin_family = PF_INET;                  //IPV4
     addrServer.sin_port = htons(port);                //PORT
 
     // if ((sock = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
-    if ((sock = socket (AF_INET, SOCK_STREAM, 0)) == -1)
+    if ((sock = socket (PF_INET, SOCK_STREAM, 0)) == -1)
         perror ("socket");
 
     int option = 1;
+    if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &option, sizeof(int)) == -1)
+        close_socket ("setsockopt SO_REUSEADDR", sock);
+    option = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int)) == -1)
         close_socket ("setsockopt SO_REUSEADDR", sock);
     // int size_buf = 1000;
@@ -91,11 +94,10 @@ std::string    MyWebServer::_recv(int sock) {
     while ((ret = recv(sock, buf, 100000, 0)) > 0) {
         buf[ret] = '\0';
         request += buf;
-        if ((request.find("\r\n\r\n") != std::string::npos && request.find("chunked") == std::string::npos) || // we find that it is not chunked
+        if ((request.find("chunked") == std::string::npos && request.find("\r\n\r\n") != std::string::npos) || // we find that it is not chunked
             request.find("0\r\n\r\n") != std::string::npos) {
            break ;
         }
-        usleep(100);
     }
     if (ret == -1) perror("recv");
     return request;
@@ -110,8 +112,21 @@ int     MyWebServer::accept_client(int server_sock) {
     // Wait for a client to connect
     if ((client_sock = accept(server_sock, &client_ad, &client_len)) < 0)
         perror("accept");
-    if (fcntl(client_sock, F_GETFL, O_NONBLOCK) == -1)
-        close_socket ("Non blocking", client_sock);
+
+    std::cout << "client #" << client_sock << " connected to #" << server_sock << std::endl;
+
+    // add client to queue / map
+    client_server[client_sock] = server_sock;
+    queue_clients.push(client_sock);
+
+    // suppress first client if too much of them
+    if (this->queue_clients.size() > 200) // limit the amount of clients
+    {
+        close(queue_clients.front());
+        client_server.erase(queue_clients.front());
+        FD_CLR(queue_clients.front(), &current_sockets);
+        queue_clients.pop();
+    }
 
     return client_sock;
 }
@@ -145,10 +160,10 @@ void    MyWebServer::run() {
         }
 
         // because select is destructive
-        struct timeval tv = {2, 0};
-        if (select(max + 1, &current_sockets, NULL, NULL, &tv) == -1) {
+        // struct timeval tv = {2, 0};
+        if (select(max + 1, &current_sockets, NULL, NULL, NULL) == -1) {
             std::cout << "select failed" << std::endl;
-            continue ;
+            break ;
         }
 
         // Check for internal
@@ -159,24 +174,30 @@ void    MyWebServer::run() {
                 
                 // ADD THE CLIENT
                 if (std::count(this->server_sockets.begin(), this->server_sockets.end(), fd)) {
-                    int client_sock = accept_client(fd);
-                    client_server[client_sock] = fd;
-                    if (client_sock > max) max = client_sock;
-                    // FD_SET(client_sock, &current_sockets);
-                    std::cout << "client #" << client_sock << " connected to #" << fd << std::endl;
-                    usleep(10000);
+                    accept_client(fd);
                 }
 
                 // HANDLE THE CLIENT
-                
                 else {
                     try {
+                        // clock_t time_req = clock(); // TIME_REQUIRED
+                        
                         std::string content = _recv(fd);
                         if (content != "")
                         {
+                            // BLU(clock() - time_req) // TIME TO RECEIVE BLUE
+
+                            // time_req = clock(); // TIME_REQUIRED
                             RequestParser   request(content);
-                            Response response(request, server_from_fd(client_server[fd]));
+                            // YLW(clock() - time_req) // TIME TO PARSE YLW
+                        
+                            // time_req = clock(); // TIME_REQUIRED
+                            Response response(request, server_from_fd(client_server[fd]));                            
                             std::string response_render(response.render());
+                            // GRN(clock() - time_req) // TIME TO ANSWER GRN
+
+                            // time_req = clock(); // TIME_REQUIRED
+
                             _send(fd, response_render);
                             FD_CLR(fd, &current_sockets);
                             if (request.command == "GET" && content.size() != 95) {
@@ -196,19 +217,6 @@ void    MyWebServer::run() {
                 }
             }
         }
-
-        // // HARD RESET WHEN NO CLIENT
-        // if (client_server.size() == 0)
-        // {
-        //     std::cout << "HARD RESET" << std::endl;
-        //     for (size_t i = 0; i < server_sockets.size(); ++i) {
-        //         if (close(server_sockets[i]) < 0) perror("close main connection");
-        //         FD_CLR(server_sockets[i], &current_sockets);
-                
-        //     }
-        //     server_sockets.clear();
-        //     _bind_all();
-        // }
     }
 }
 

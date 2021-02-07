@@ -312,7 +312,7 @@ char        **Response::get_cgi_env(){
     env[i++] = strdup("REMOTE_USER=''");
     env[i++] = strdup("REQUEST_URI=/tmp/www/directory/youpi.bla");
     env[i++] = strdup("SERVER_NAME=''");
-    env[i++] = strdup("SCRIPT_NAME=/tmp/cgi-bin/cgi_tester");
+    env[i++] = strdup("SCRIPT_NAME=/tmp/cgi-bin/ubuntu_cgi_tester");
     env[i++] = strdup("SERVER_PORT=5000");
     env[i++] = strdup("SERVER_SOFTWARE=HTTP/1.1");
 
