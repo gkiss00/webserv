@@ -43,4 +43,10 @@ using std::string;
 
 extern std::vector<Server>  servers;
 
+#define PRINT(x) std::cout << x << std::endl;
+#define GRN(x) std::cout << "\e[32m" << x << "\e[m" << std::endl;
+#define RED(x) std::cout << "\e[31m" << x << "\e[m" << std::endl;
+#define YLW(x) std::cout << "\e[33m" << x << "\e[m" << std::endl;
+#define BLU(x) std::cout << "\e[34m" << x << "\e[m" << std::endl;
+
 #endif

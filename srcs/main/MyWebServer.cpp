@@ -1,5 +1,4 @@
 #include "MyWebServer.hpp"
-#define PRINT(x) std::cout << x << std::endl;
 
 // Based on https://www.csd.uoc.gr/~hy556/material/tutorials/cs556-3rd-tutorial.pdf
 // https://www.tenouk.com/Module41a.html
@@ -48,7 +47,7 @@ int    MyWebServer::new_socket(const char *host, int port) {
     // if (fcntl(sock, F_GETFL, O_NONBLOCK) == -1)
     //     close_socket ("Non blocking", sock);
 
-    listen(sock, 0);
+    listen(sock, 1000);
     this->server_sockets.push_back(sock);
     return sock;
 }
@@ -67,16 +66,16 @@ void    MyWebServer::_bind_all (const char *host) {
 int     MyWebServer::_send(int sock, std::string msg) {
     int tot = 0;
     while(msg != "") {
-        std::cout << "GOOD OR BAD?" << std::endl;
+        // std::cout << "GOOD OR BAD?" << std::endl;
         int ret = send(sock, msg.c_str(), msg.size(), 0);
         if (ret < 0) {
-            std::cout << "bad bad bad" << std::endl;
+            // std::cout << "bad bad bad" << std::endl;
         } else if (ret != (int)msg.size()) {
             msg = msg.substr(ret);
             tot += ret;
-            std::cout << "tot= " << tot << std::endl;
+            // std::cout << "tot= " << tot << std::endl;
         } else {
-            std::cout << "good good good " << std::endl;
+            // std::cout << "good good good " << std::endl;
             break;
         }
     }
@@ -110,6 +109,8 @@ int     MyWebServer::accept_client(int server_sock) {
     // Wait for a client to connect
     if ((client_sock = accept(server_sock, &client_ad, &client_len)) < 0)
         perror("accept");
+    if (fcntl(client_sock, F_GETFL, O_NONBLOCK) == -1)
+        close_socket ("Non blocking", client_sock);
 
     return client_sock;
 }
@@ -143,10 +144,10 @@ void    MyWebServer::run() {
         }
 
         // because select is destructive
-        PRINT("select")
-        if (select(max + 1, &current_sockets, NULL, NULL, NULL) == -1) {
+        struct timeval tv = {2, 0};
+        if (select(max + 1, &current_sockets, NULL, NULL, &tv) == -1) {
             std::cout << "select failed" << std::endl;
-            break ;
+            continue ;
         }
 
         // Check for internal
@@ -167,36 +168,44 @@ void    MyWebServer::run() {
                 // HANDLE THE CLIENT
                 else {
                     try {
-                        PRINT("recv")
-                        RequestParser   request(_recv(fd));
-                        Response response(request, server_from_fd(client_server[fd]));
-                        PRINT("send")
-                        _send(fd, response.render());
-                        FD_CLR(fd, &current_sockets);
+                        std::string content = _recv(fd);
+                        if (content != "")
+                        {
+                            RequestParser   request(content);
+                            Response response(request, server_from_fd(client_server[fd]));
+                            std::string response_render(response.render());
+                            _send(fd, response_render);
+                            FD_CLR(fd, &current_sockets);
+                            if (request.command == "GET" && content.size() != 95) {
+                                YLW(content.size())
+                            }
+                            if (request.command == "PUT"){
+                                if (close(fd) < 0)
+                                    perror("closing client");
+                                client_server.erase(fd);
+                            }
+                        }
                     } catch(request_exception &e) {
                         // bad message
                         std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
                         _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
                     }
-
-                    FD_CLR(fd, &current_sockets);
-                    if (close(fd) < 0) perror("closing client");
-                    client_server.erase(fd);
                 }
             }
         }
 
-        // HARD RESET WHEN NO CLIENT
-        if (client_server.size() == 0)
-        {
-            std::cout << "HARD RESET" << std::endl;
-            for (size_t i = 0; i < server_sockets.size(); ++i) {
-                if (close(server_sockets[i]) < 0) perror("close main connection");
-                FD_CLR(server_sockets[i], &current_sockets);
-            }
-            server_sockets.clear();
-            _bind_all();
-        }
+        // // HARD RESET WHEN NO CLIENT
+        // if (client_server.size() == 0)
+        // {
+        //     std::cout << "HARD RESET" << std::endl;
+        //     for (size_t i = 0; i < server_sockets.size(); ++i) {
+        //         if (close(server_sockets[i]) < 0) perror("close main connection");
+        //         FD_CLR(server_sockets[i], &current_sockets);
+                
+        //     }
+        //     server_sockets.clear();
+        //     _bind_all();
+        // }
     }
 }
 

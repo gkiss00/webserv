@@ -56,6 +56,7 @@ void        Response::setAllowedMethodsHeader() {
 void        Response::getFile() {
     struct stat stats;
 
+    std::cout << query.path << std::endl;
     content = "\n" + file_to_string(query.path) + "\n";
     stat(query.path.c_str(), &stats);
     header.addHeader("Content-Length", std::to_string(content.size() - 1));
