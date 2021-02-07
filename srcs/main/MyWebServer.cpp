@@ -69,7 +69,12 @@ int     MyWebServer::_send(int sock, std::string msg) {
         // std::cout << "GOOD OR BAD?" << std::endl;
         int ret = send(sock, msg.c_str(), msg.size(), 0);
         if (ret < 0) {
+<<<<<<< HEAD
             // std::cout << "bad bad bad" << std::endl;
+=======
+            std::cout << "bad bad bad" << std::endl;
+            usleep(1000);
+>>>>>>> 460c8f8f378db10c525d4bbd5e3d22956069402e
         } else if (ret != (int)msg.size()) {
             msg = msg.substr(ret);
             tot += ret;
@@ -95,6 +100,7 @@ std::string    MyWebServer::_recv(int sock) {
             request.find("0\r\n\r\n") != std::string::npos) {
            break ;
         }
+        usleep(100);
     }
     if (ret == -1) perror("recv");
     return request;
@@ -144,8 +150,13 @@ void    MyWebServer::run() {
         }
 
         // because select is destructive
+<<<<<<< HEAD
         struct timeval tv = {2, 0};
         if (select(max + 1, &current_sockets, NULL, NULL, &tv) == -1) {
+=======
+        
+        if (select(max + 1, &current_sockets, NULL, NULL, NULL) == -1) {
+>>>>>>> 460c8f8f378db10c525d4bbd5e3d22956069402e
             std::cout << "select failed" << std::endl;
             continue ;
         }
@@ -161,13 +172,16 @@ void    MyWebServer::run() {
                     int client_sock = accept_client(fd);
                     client_server[client_sock] = fd;
                     if (client_sock > max) max = client_sock;
-                    FD_SET(client_sock, &current_sockets);
+                    // FD_SET(client_sock, &current_sockets);
                     std::cout << "client #" << client_sock << " connected to #" << fd << std::endl;
+                    usleep(10000);
                 }
 
                 // HANDLE THE CLIENT
+                
                 else {
                     try {
+<<<<<<< HEAD
                         std::string content = _recv(fd);
                         if (content != "")
                         {
@@ -185,6 +199,14 @@ void    MyWebServer::run() {
                                 client_server.erase(fd);
                             }
                         }
+=======
+                        
+                        RequestParser   request(_recv(fd));
+                        Response response(request, server_from_fd(client_server[fd]));
+                        
+                        _send(fd, response.render());
+                        FD_CLR(fd, &current_sockets);
+>>>>>>> 460c8f8f378db10c525d4bbd5e3d22956069402e
                     } catch(request_exception &e) {
                         // bad message
                         std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
