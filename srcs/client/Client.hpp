@@ -11,6 +11,7 @@ class Client {
         Client(int server_sd = 1000);
         ~Client();
         void add_content(std::string content);
+        void rm_content();
         bool is_ready();
         void clear();
         std::string get_content();

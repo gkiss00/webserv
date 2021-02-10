@@ -102,7 +102,7 @@ std::string    MyWebServer::_recv(int sock) {
     ret = recv(sock, buf, 100000, 0); 
     buf[ret] = '\0';
     if (ret == -1)
-        std::cerr << "recv" << std::endl; // must close
+        std::cerr << "recv fail" << std::endl; // must close
     return std::string(buf);
 }
 
@@ -158,6 +158,7 @@ void    MyWebServer::run() {
         }
         for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
         {
+            // std::cout << "[] = " << it->first << std::endl;
             FD_SET(it->first, &current_sockets);
             if (it->first > max) max = it->first;
         }
@@ -165,8 +166,11 @@ void    MyWebServer::run() {
         // SELECT
         if (select(max + 1, &current_sockets, NULL, NULL, NULL) == -1) {
             std::cout << "select failed" << std::endl;
+            perror("");
             break ;
         }
+
+        // usleep(100000);
 
         // Go through fds
         for (int fd = 0; fd <= max; ++fd) {
@@ -175,32 +179,30 @@ void    MyWebServer::run() {
             // If the fd is in the set
             if (FD_ISSET(fd, &current_sockets)) {
 
-                BLU(clients[fd].is_ready());
-                GRN(clients[fd].get_content());
                 
                 // ADD THE CLIENT
                 if (std::count(this->server_sockets.begin(), this->server_sockets.end(), fd)) {
                     accept_client(fd);
                 }
-
-                // client not ready
-                else if (!clients[fd].is_ready())
-                    clients[fd].add_content(_recv(fd));
-
-                // HANDLE THE CLIENT
                 else {
-                    try {                        
-                        RequestParser   request(clients[fd].get_content());
-                        Response response(request, server_from_fd(clients[fd].server_sd));                            
-                        std::string response_render(response.render());
+                    clients[fd].add_content(_recv(fd));
+                    BLU(clients[fd].is_ready());
+                    GRN(clients[fd].get_content());
+                    if (clients[fd].is_ready()) {
+                        try {                        
+                            RequestParser   request(clients[fd].get_content());
+                            Response response(request, server_from_fd(clients[fd].server_sd));                            
+                            std::string response_render(response.render());
 
-                        _send(fd, response_render);
-                        if (request.command == "PUT")
-                            remove_client(fd);
+                            _send(fd, response_render);
+                            // if (request.command == "PUT")
+                            //     remove_client(fd);
 
-                    } catch(request_exception &e) {
-                        std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
-                        _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
+                        } catch(request_exception &e) {
+                            std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
+                            _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
+                        }
+                        clients[fd].rm_content();
                     }
                 }
             }
