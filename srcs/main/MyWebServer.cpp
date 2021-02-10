@@ -1,6 +1,7 @@
 #include "MyWebServer.hpp"
 #define MAX_CLIENT
 
+
 // Based on https://www.csd.uoc.gr/~hy556/material/tutorials/cs556-3rd-tutorial.pdf
 // https://www.tenouk.com/Module41a.html
 
@@ -19,8 +20,7 @@ MyWebServer::~MyWebServer() {
     // Close the clients
     while (queue_clients.size()) {
         close(queue_clients.front());
-        client_server.erase(queue_clients.front());
-        FD_CLR(queue_clients.front(), &current_sockets);
+        clients.erase(queue_clients.front());
         queue_clients.pop_front();
     }
 }
@@ -96,25 +96,14 @@ int     MyWebServer::_send(int sock, std::string msg) {
 
 // RECV
 std::string    MyWebServer::_recv(int sock) {
-    std::string request;
     char        buf[100001];
     int         ret;
 
-    while ((ret = recv(sock, buf, 100000, 0)) > 0) {
-        buf[ret] = '\0';
-        request += buf;
-        if ((request.find("chunked") == std::string::npos && request.find("\r\n\r\n") != std::string::npos) || // we find that it is not chunked
-            request.find("0\r\n\r\n") != std::string::npos) {
-           break ;
-        }
-#ifdef __APPLE__
-    usleep(10000);
-#endif
-    }
-#ifndef __APPLE__
-    if (ret == -1) std::cerr << "recv" << std::endl;
-#endif
-    return request;
+    ret = recv(sock, buf, 100000, 0); 
+    buf[ret] = '\0';
+    if (ret == -1)
+        std::cerr << "recv" << std::endl; // must close
+    return std::string(buf);
 }
 
 // ACCEPT CLIENT
@@ -130,7 +119,7 @@ int     MyWebServer::accept_client(int server_sock) {
     std::cout << "client #" << client_sock << " connected to #" << server_sock << std::endl;
 
     // Add client to queue / map
-    client_server[client_sock] = server_sock;
+    clients[client_sock] = Client(server_sock);
     queue_clients.push_back(client_sock);
 
     // suppress first client if too much of them
@@ -143,8 +132,7 @@ int     MyWebServer::accept_client(int server_sock) {
 void     MyWebServer::remove_client(int client_sock) {
     close(client_sock);
     queue_clients.remove(client_sock);
-    client_server.erase(client_sock);
-    FD_CLR(client_sock, &current_sockets);
+    clients.erase(client_sock);
 }
 
 
@@ -168,7 +156,7 @@ void    MyWebServer::run() {
             FD_SET(servers[i].socket, &current_sockets);
             if (servers[i].socket > max) max = servers[i].socket;
         }
-        for (std::map<int, int>::iterator it = client_server.begin(); it != client_server.end(); ++it)
+        for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
         {
             FD_SET(it->first, &current_sockets);
             if (it->first > max) max = it->first;
@@ -183,31 +171,33 @@ void    MyWebServer::run() {
         // Go through fds
         for (int fd = 0; fd <= max; ++fd) {
 
+
             // If the fd is in the set
             if (FD_ISSET(fd, &current_sockets)) {
+
+                BLU(clients[fd].is_ready());
+                GRN(clients[fd].get_content());
                 
                 // ADD THE CLIENT
                 if (std::count(this->server_sockets.begin(), this->server_sockets.end(), fd)) {
                     accept_client(fd);
-                    FD_CLR(fd, &current_sockets);
                 }
+
+                // client not ready
+                else if (!clients[fd].is_ready())
+                    clients[fd].add_content(_recv(fd));
 
                 // HANDLE THE CLIENT
                 else {
                     try {                        
-                        std::string content = _recv(fd);
-                        if (content != "")
-                        {
-                            RequestParser   request(content);
-                            Response response(request, server_from_fd(client_server[fd]));                            
-                            std::string response_render(response.render());
+                        RequestParser   request(clients[fd].get_content());
+                        Response response(request, server_from_fd(clients[fd].server_sd));                            
+                        std::string response_render(response.render());
 
-                            _send(fd, response_render);
-                            FD_CLR(fd, &current_sockets);
-                            if (request.command == "PUT"){
-                                remove_client(fd);
-                            }
-                        }
+                        _send(fd, response_render);
+                        if (request.command == "PUT")
+                            remove_client(fd);
+
                     } catch(request_exception &e) {
                         std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
                         _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");

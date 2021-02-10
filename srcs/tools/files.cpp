@@ -1,5 +1,6 @@
 #include "webserv.hpp"
 
+
 std::string file_to_string(std::string path) {
     std::string content = "";
     int ret;

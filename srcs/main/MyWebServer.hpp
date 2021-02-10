@@ -3,6 +3,8 @@
 
 #include "webserv.hpp"
 
+class Client;
+
 class MyWebServer {
     public:
 
@@ -36,7 +38,7 @@ class MyWebServer {
 
     private:
         fd_set              current_sockets; // list of all sockets.
-        std::map<int, int>  client_server; // client_sock : server_sock
+        std::map<int, Client>  clients; // client_sock : Client
         std::list<int>      queue_clients;
         std::vector<int>    server_sockets;
         std::vector<Server> servers;

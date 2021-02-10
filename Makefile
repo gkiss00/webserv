@@ -14,6 +14,8 @@ SRCS =	srcs/main/main.cpp \
 		srcs/configFileReader/Server.cpp \
 		srcs/configFileReader/Location.cpp \
 		srcs/configFileReader/NewConfigFileReader.cpp \
+		srcs/client/Client.cpp \
+
 
 OBJS = ${SRCS:.cpp=.o}
 
