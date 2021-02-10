@@ -510,7 +510,7 @@ string  Response::render() {
     else
         execute();
 
-    std::string response(statusLine(status) + header.toString() + content + ((query.command == "PUT") ? "\n\r\n\r" : ""));
+    std::string response(statusLine(status) + header.toString() + content);
 
 #ifdef DEBUG
     std::cerr << "_____RESPONSE_____ [" << response.size() << "]" << std::endl;
