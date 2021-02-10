@@ -186,17 +186,19 @@ void    MyWebServer::run() {
                 }
                 else {
                     clients[fd].add_content(_recv(fd));
-                    BLU(clients[fd].is_ready());
-                    GRN(clients[fd].get_content());
+                    // BLU(clients[fd].is_ready());
+                    // GRN(clients[fd].get_content());
                     if (clients[fd].is_ready()) {
-                        try {                        
+                        try {
                             RequestParser   request(clients[fd].get_content());
-                            Response response(request, server_from_fd(clients[fd].server_sd));                            
+                            Response response(request, server_from_fd(clients[fd].server_sd));
                             std::string response_render(response.render());
 
                             _send(fd, response_render);
-                            // if (request.command == "PUT")
-                            //     remove_client(fd);
+                            if (request.command == "PUT") {
+                                remove_client(fd);
+                                break ;
+                            }
 
                         } catch(request_exception &e) {
                             std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
