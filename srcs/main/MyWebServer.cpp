@@ -107,8 +107,13 @@ std::string    MyWebServer::_recv(int sock) {
             request.find("0\r\n\r\n") != std::string::npos) {
            break ;
         }
+#ifdef __APPLE__
+    usleep(10000);
+#endif
     }
-    if (ret == -1) perror("recv");
+#ifndef __APPLE__
+    if (ret == -1) std::cerr << "recv" << std::endl;
+#endif
     return request;
 }
 

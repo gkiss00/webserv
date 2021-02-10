@@ -11,7 +11,11 @@ class MyWebServer {
                 virtual const char * what() const throw();
         };
 
+#ifdef __APPLE__
+        MyWebServer(std::string config_path = "srcs/config/new_macos.conf");
+#else
         MyWebServer(std::string config_path = "srcs/config/new.conf");
+#endif
         ~MyWebServer();
 
         // Sockets

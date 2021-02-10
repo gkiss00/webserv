@@ -7,7 +7,7 @@ std::string file_to_string(std::string path) {
 
     int fd = open(path.c_str(), O_RDONLY);
     if (fd == -1){
-        perror("open RDONLY");
+        std::cerr << "open RDONLY error" << std::endl;
         return content;
     }
     while ((ret = read(fd, buf, 255)) > 0)
@@ -16,7 +16,7 @@ std::string file_to_string(std::string path) {
         content += buf;
     }
     if (ret == -1)
-        perror("read file_to_string");
+        std::cerr << "read file_to_string error" << std::endl;
     close(fd);
     return content;
 }
@@ -36,10 +36,7 @@ void        create_file(std::string path, std::string content) {
     std::cout << path << std::endl;
     int fd = open(path.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 666);
     if (fd == -1)
-    {
-        perror("open CREAT");
         return ;
-    }
     int ret;
     std::string copy(content);
     while ((ret = write(fd, copy.c_str(), copy.size())) > 0) {
@@ -48,7 +45,7 @@ void        create_file(std::string path, std::string content) {
             break ;
         copy = copy.substr(ret);
     }
-    if (ret == -1) perror("write");
+    if (ret == -1) std::cerr << "write failed" << std::endl;
     close(fd);
 }
 
