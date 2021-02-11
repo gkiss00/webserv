@@ -148,10 +148,11 @@ Server &MyWebServer::server_from_fd(int fd) {
     return servers[0];
 }
 
-#define THREAD_POOL_SIZE 10
+#define THREAD_POOL_SIZE 5
 
 pthread_t thread_pool[THREAD_POOL_SIZE];
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_queue = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_file = PTHREAD_MUTEX_INITIALIZER;
 
 std::queue<int> on_a_pas_une_queue_nous;
 std::list<int> fd_in_use;
@@ -165,11 +166,11 @@ void    MyWebServer::handle_request(int fd) {
     if (clients[fd].is_ready()) {
         try {
             RequestParser   request(clients[fd].get_content());
-            Response response(request, server_from_fd(clients[fd].server_sd));
-                            
-            // client[fd].clear_response();
-            clients[fd].add_response(response.render(), request.command == "PUT");
+            Response        response(request, server_from_fd(clients[fd].server_sd));
 
+            pthread_mutex_lock(&mutex_file);
+            clients[fd].add_response(response.render(), request.command == "PUT");
+            pthread_mutex_unlock(&mutex_file);
         } catch(request_exception &e) {
             std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
             _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
@@ -186,7 +187,7 @@ void *thread_function(void *arg) {
     while (true) {
         fd = -1;
 
-        pthread_mutex_lock(&mutex);
+        pthread_mutex_lock(&mutex_queue);
         if (on_a_pas_une_queue_nous.empty() == false) {
             // std::cerr << "i = " << cmptr++ << std::endl;
             fd = on_a_pas_une_queue_nous.front();
@@ -194,16 +195,16 @@ void *thread_function(void *arg) {
             on_a_pas_une_queue_nous.pop();
             // std::cerr << "size = " << on_a_pas_une_queue_nous.size() << std::endl;
         }
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(&mutex_queue);
 
         if (fd != -1) {
             // std::cout << "--- bef ---" << std::endl;
             ws->handle_request(fd);
             // std::cout << "--- aft ---" << std::endl;
-            pthread_mutex_lock(&mutex);
+            pthread_mutex_lock(&mutex_queue);
             fd_in_use.remove(fd);
             // std::cerr << "size = " << fd_in_use.size() << std::endl;
-            pthread_mutex_unlock(&mutex);
+            pthread_mutex_unlock(&mutex_queue);
         }
     }
 }
@@ -247,7 +248,7 @@ void    MyWebServer::run() {
         // Go through fds
         for (int fd = 0; fd <= max; ++fd) {
 
-            pthread_mutex_lock(&mutex);
+            pthread_mutex_lock(&mutex_queue);
             // std::cout << "--- mutex ---" << std::endl;
             if (std::count(fd_in_use.begin(), fd_in_use.end(), fd) == 0) {
 
@@ -256,7 +257,7 @@ void    MyWebServer::run() {
 
                     if (std::count(this->server_sockets.begin(), this->server_sockets.end(), fd)) {
                         accept_client(fd);
-                        pthread_mutex_unlock(&mutex);
+                        pthread_mutex_unlock(&mutex_queue);
                         break ;
                     } else {
                         fd_in_use.push_back(fd);
@@ -267,19 +268,19 @@ void    MyWebServer::run() {
                     
                     std::string mail(clients[fd].get_response());
 
-                    if (mail != "") {
+                    if (mail != "" || clients[fd].get_is_put()) {
                         _send(fd, mail);
                         clients[fd].clear_response();
 
                         if (clients[fd].get_is_put()) {
                             remove_client(fd);
-                            pthread_mutex_unlock(&mutex);
+                            pthread_mutex_unlock(&mutex_queue);
                             break ;
                         }
                     }
                 }
             }
-            pthread_mutex_unlock(&mutex);
+            pthread_mutex_unlock(&mutex_queue);
         }
     }
 }

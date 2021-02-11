@@ -28,7 +28,7 @@ std::string Client::get_content() {
 }
 
 void Client::add_response(std::string new_response, bool new_is_put) {
-    response += new_response;
+    response = new_response;
     is_put = new_is_put;
 }
 
