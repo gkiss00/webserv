@@ -37,7 +37,6 @@ class MyWebServer {
         void run();
 
     private:
-        fd_set              current_sockets; // list of all sockets.
         std::map<int, Client>  clients; // client_sock : Client
         std::list<int>      queue_clients;
         std::vector<int>    server_sockets;

@@ -10,10 +10,6 @@ void Client::add_content(std::string new_content) {
     content += new_content;
 }
 
-void Client::rm_content() {
-    content = "";
-}
-
 bool Client::is_ready() {
     if ((content.find("chunked") == std::string::npos // we find that it is not chunked 
     && content.find("\r\n\r\n") != std::string::npos)
@@ -23,11 +19,28 @@ bool Client::is_ready() {
     return false;
 }
 
-void Client::clear() {
+void Client::clear_content() {
     content.clear();
 }
 
 std::string Client::get_content() {
     return content;
+}
+
+void Client::add_response(std::string new_response, bool new_is_put) {
+    response += new_response;
+    is_put = new_is_put;
+}
+
+void Client::clear_response() {
+    response.clear();
+}
+
+std::string Client::get_response() {
+    return response;
+}
+
+bool Client::get_is_put() {
+    return is_put;
 }
 

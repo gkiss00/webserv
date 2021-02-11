@@ -148,38 +148,40 @@ Server &MyWebServer::server_from_fd(int fd) {
 void    MyWebServer::run() {
     while (true) {
 
-        // set current_sockets for select
+        fd_set  reading_sockets, writing_sockets;
+
+        // set reading_sockets for select
         int max = 0;
-        FD_ZERO(&current_sockets);
+        FD_ZERO(&reading_sockets);
+        FD_ZERO(&writing_sockets);
         for (size_t i = 0; i < servers.size(); ++i)
         {
-            FD_SET(servers[i].socket, &current_sockets);
+            FD_SET(servers[i].socket, &reading_sockets);
+            FD_SET(servers[i].socket, &writing_sockets);
             if (servers[i].socket > max) max = servers[i].socket;
         }
         for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
         {
             // std::cout << "[] = " << it->first << std::endl;
-            FD_SET(it->first, &current_sockets);
+            FD_SET(it->first, &reading_sockets);
+            FD_SET(it->first, &writing_sockets);
             if (it->first > max) max = it->first;
         }
 
         // SELECT
-        if (select(max + 1, &current_sockets, NULL, NULL, NULL) == -1) {
+        if (select(max + 1, &reading_sockets, &writing_sockets, NULL, NULL) == -1) {
             std::cout << "select failed" << std::endl;
             perror("");
             break ;
         }
-
-        // usleep(100000);
 
         // Go through fds
         for (int fd = 0; fd <= max; ++fd) {
 
 
             // If the fd is in the set
-            if (FD_ISSET(fd, &current_sockets)) {
+            if (FD_ISSET(fd, &reading_sockets)) {
 
-                
                 // ADD THE CLIENT
                 if (std::count(this->server_sockets.begin(), this->server_sockets.end(), fd)) {
                     accept_client(fd);
@@ -192,19 +194,30 @@ void    MyWebServer::run() {
                         try {
                             RequestParser   request(clients[fd].get_content());
                             Response response(request, server_from_fd(clients[fd].server_sd));
-                            std::string response_render(response.render());
-
-                            _send(fd, response_render);
-                            if (request.command == "PUT") {
-                                remove_client(fd);
-                                break ;
-                            }
+                            
+                            // client[fd].clear_response();
+                            clients[fd].add_response(response.render(), request.command == "PUT");
 
                         } catch(request_exception &e) {
                             std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
                             _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
                         }
-                        clients[fd].rm_content();
+                        clients[fd].clear_content();
+                    }
+                }
+            }
+            if (FD_ISSET(fd, &writing_sockets)) {
+
+                std::string mail(clients[fd].get_response());
+
+                if (mail != "") {
+
+                    _send(fd, mail);
+                    clients[fd].clear_response();
+                    
+                    if (clients[fd].get_is_put()) {
+                        remove_client(fd);
+                        break ;
                     }
                 }
             }

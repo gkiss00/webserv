@@ -10,11 +10,16 @@ class Client {
     public:
         Client(int server_sd = 1000);
         ~Client();
-        void add_content(std::string content);
-        void rm_content();
-        bool is_ready();
-        void clear();
+        void add_content(std::string new_content);
+        void clear_content();
         std::string get_content();
+        bool is_ready();
+
+        void add_response(std::string new_response, bool new_is_put);
+        void clear_response();
+        std::string get_response();
+
+        bool get_is_put();
 
 // variables
 
@@ -22,7 +27,8 @@ class Client {
 
     private:
         std::string content;
-
+        std::string response;
+        bool        is_put;
 };
 
 #endif
