@@ -164,18 +164,18 @@ void    MyWebServer::handle_request(int fd) {
     // BLU(clients[fd].is_ready());
     // GRN(clients[fd].get_content());
     if (clients[fd].is_ready()) {
+        pthread_mutex_lock(&mutex_file);
         try {
             RequestParser   request(clients[fd].get_content());
             Response        response(request, server_from_fd(clients[fd].server_sd));
 
-            pthread_mutex_lock(&mutex_file);
             clients[fd].add_response(response.render(), request.command == "PUT");
-            pthread_mutex_unlock(&mutex_file);
         } catch(request_exception &e) {
             std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
             _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
         }
         clients[fd].clear_content();
+        pthread_mutex_unlock(&mutex_file);
     }
 }
 
@@ -270,6 +270,7 @@ void    MyWebServer::run() {
 
                     if (mail != "" || clients[fd].get_is_put()) {
                         _send(fd, mail);
+                        std::cout << "." << std::flush;
                         clients[fd].clear_response();
 
                         if (clients[fd].get_is_put()) {
