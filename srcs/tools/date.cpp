@@ -1,4 +1,4 @@
-#include <iostream>
+#include <iostream> // just for the strings
 #include <sys/time.h>
 
 // result: "Fri, 31 Dec 1999 23:59:59 GMT"

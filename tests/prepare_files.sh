@@ -11,8 +11,8 @@ echo not_happy.bad_extension > /tmp/www/YoupiBanane/Yeah/not_happy.bad_extension
 
 #remove previous mistake
 rm -rf /tmp/pages/pages
-cp -R srcs/pages /tmp/
-cp -R srcs/cgi-bin /tmp/
+cp -R ../srcs/pages /tmp/
+cp -R ../srcs/cgi-bin /tmp/
 
 # /tmp
 # ├── cgi-bin

@@ -11,6 +11,7 @@ SRCS =	srcs/main/main.cpp \
 		srcs/tools/trim.cpp \
 		srcs/response/Response.cpp \
 		srcs/response/ResponseHeader.cpp \
+		srcs/response/PostHeader.cpp \
 		srcs/configFileReader/Server.cpp \
 		srcs/configFileReader/Location.cpp \
 		srcs/configFileReader/NewConfigFileReader.cpp \

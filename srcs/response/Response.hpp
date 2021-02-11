@@ -2,6 +2,7 @@
 # define RESPONSE_HPP
 
 # include "ResponseHeader.hpp"
+# include "PostHeader.hpp"
 # include "webserv.hpp"
 
 class Server;

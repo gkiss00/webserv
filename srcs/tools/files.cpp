@@ -25,8 +25,7 @@ std::string file_to_string(std::string path) {
 bool        is_dir(std::string path) {
     struct stat stats;
 
-    if (stat(path.c_str(), &stats) == 0)
-    {
+    if (stat(path.c_str(), &stats) == 0) {
         if (stats.st_mode & DIRECTORY_STATS)
             return true;
     }
@@ -53,8 +52,7 @@ void        create_file(std::string path, std::string content) {
 void        mkdir_p(std::string path) {
     struct stat stats;
 
-    if (stat(path.c_str(), &stats) == 0)
-    {
+    if (stat(path.c_str(), &stats) == 0) {
         if (stats.st_mode & DIRECTORY_STATS)
             return ;
     }

@@ -227,12 +227,3 @@ void    MyWebServer::run() {
 
 
 
-// std::cout << "__________client_request__________" << std::endl;
-// std::cout << "Command = " << request.command << std::endl;
-// std::cout << "Path = " << request.path << std::endl;
-// std::cout << "HTTP_version = " << request.HTTP_version << std::endl;
-// for (std::map<std::string, std::string>::iterator it = request.headers.begin(); it != request.headers.end(); ++it){
-//     std::cout << "Headers = " << it->first << " : " << it->second << std::endl;
-// }
-// std::cout << "Body[" << request.body.size() << "] = " << request.body.substr(0, 1000) << std::endl;
-// //write

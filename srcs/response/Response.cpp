@@ -258,11 +258,6 @@ void        Response::moveFile()
 void        Response::_post() {
     status = 200;
 
-#ifdef DEBUG
-    std::cerr << query.path << std::endl;
-    std::cerr << loc << std::endl;
-    std::cerr << split(query.path, ".").size() << std::endl;
-#endif
     if (split(query.path, ".").size() != 0 && server.locations[loc].cgi.count("." + split(query.path, ".").back()) != 0){
         std::cerr << "." + split(query.path, ".").back() << std::endl;
         this->execCGI();
@@ -275,56 +270,50 @@ void        Response::_post() {
     }
 }
 
-std::string Response::format(std::string str)
-{
-    std::string ret = "HTTP_";
+// std::string Response::format(std::string str)
+// {
+//     std::string ret = "HTTP_";
 
-    std::replace(str.begin(), str.end(), '-', '_');
-    for (int i = 0; i < (int)str.size(); ++i){
-        ret += toupper(str[i]);
-    }
-    return (ret);
-}
+//     std::replace(str.begin(), str.end(), '-', '_');
+//     for (int i = 0; i < (int)str.size(); ++i){
+//         ret += toupper(str[i]);
+//     }
+//     return (ret);
+// }
 
-char        **Response::get_cgi_env(){
-    char **env = (char **)malloc(100 * sizeof(char *));
-    int i = 0;
+// char        **Response::get_cgi_env(){
+//     char **env = (char **)malloc(100 * sizeof(char *));
+//     int i = 0;
 
-#ifdef DEBUG
-    std::cerr << "---- get_cgi_env ----" << std::endl;
-#endif
-    env[i++] = strdup("REQUEST_METHOD=POST");
-    env[i++] = strdup("SERVER_PROTOCOL=HTTP/1.1");
-    // Because you wont call the cgi directly use the full path as PATH_INFO
-    env[i++] = strdup("PATH_INFO=/tmp/www/directory/youpi.bla");
-#ifdef DEBUG
-    std::cerr << "+++++++++++" << server.locations[loc].root + this->query.path << std::endl;
-#endif
-    env[i++] = strdup(std::string("CONTENT_LENGTH=" + std::to_string(this->query.body.size())).c_str());
+//     env[i++] = strdup("REQUEST_METHOD=POST");
+//     env[i++] = strdup("SERVER_PROTOCOL=HTTP/1.1");
+//     // Because you wont call the cgi directly use the full path as PATH_INFO
+//     env[i++] = strdup("PATH_INFO=/tmp/www/directory/youpi.bla");
+//     env[i++] = strdup(std::string("CONTENT_LENGTH=" + std::to_string(this->query.body.size())).c_str());
 
-    env[i++] = strdup("AUTH_TYPE=''");
-    env[i++] = strdup("CONTENT_TYPE=test/file");
-    env[i++] = strdup("GATEWAY_INTERFACE=CGI/révision");
-    env[i++] = strdup((std::string("PATH_TRANSLATED=") + server.locations[loc].root + this->query.path).c_str());
-    env[i++] = strdup("QUERY_STRING=''");
-    env[i++] = strdup("REMOTE_ADDR=''");
-    env[i++] = strdup("REMOTE_IDENT=''");
-    env[i++] = strdup("REMOTE_USER=''");
-    env[i++] = strdup("REQUEST_URI=/tmp/www/directory/youpi.bla");
-    env[i++] = strdup("SERVER_NAME=''");
-    env[i++] = strdup("SCRIPT_NAME=/tmp/cgi-bin/ubuntu_cgi_tester");
-    env[i++] = strdup("SERVER_PORT=5000");
-    env[i++] = strdup("SERVER_SOFTWARE=HTTP/1.1");
+//     env[i++] = strdup("AUTH_TYPE=''");
+//     env[i++] = strdup("CONTENT_TYPE=test/file");
+//     env[i++] = strdup("GATEWAY_INTERFACE=CGI/révision");
+//     env[i++] = strdup((std::string("PATH_TRANSLATED=") + server.locations[loc].root + this->query.path).c_str());
+//     env[i++] = strdup("QUERY_STRING=''");
+//     env[i++] = strdup("REMOTE_ADDR=''");
+//     env[i++] = strdup("REMOTE_IDENT=''");
+//     env[i++] = strdup("REMOTE_USER=''");
+//     env[i++] = strdup("REQUEST_URI=/tmp/www/directory/youpi.bla");
+//     env[i++] = strdup("SERVER_NAME=''");
+//     env[i++] = strdup("SCRIPT_NAME=/tmp/cgi-bin/ubuntu_cgi_tester");
+//     env[i++] = strdup("SERVER_PORT=5000");
+//     env[i++] = strdup("SERVER_SOFTWARE=HTTP/1.1");
 
-    std::map<std::string, std::string>::iterator it = this->query.headers.begin();
-    std::map<std::string, std::string>::iterator ite = this->query.headers.end();
-    while (it != ite){
-        env[i++] = strdup(std::string(format(it->first) + "=" + it->second).c_str());
-        ++it;
-    }
-    env[i++] = NULL;
-    return (env);
-}
+//     std::map<std::string, std::string>::iterator it = this->query.headers.begin();
+//     std::map<std::string, std::string>::iterator ite = this->query.headers.end();
+//     while (it != ite){
+//         env[i++] = strdup(std::string(format(it->first) + "=" + it->second).c_str());
+//         ++it;
+//     }
+//     env[i++] = NULL;
+//     return (env);
+// }
 
 void        Response::execCGI()
 {
@@ -387,8 +376,7 @@ void        Response::execCGI()
 #endif
             args[1] = NULL;
 
-            char    **env = get_cgi_env();
-
+            PostHeader ph(server, server.locations[loc], query);
 #ifdef DEBUG
             std::cerr << "---- envs ----" << std::endl;
             for (int i = 0; env[i] != NULL; ++i){
@@ -401,7 +389,7 @@ void        Response::execCGI()
             }else{
                 dup2(fd, 1);
                 chdir("/tmp/cgi-bin/");
-                execve(args[0], args, env);
+                execve(args[0], args, ph.toTable());
             }
             perror("execve failed: ");
             exit(-1);
