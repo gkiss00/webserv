@@ -12,10 +12,7 @@ std::string RequestParser::get_next(std::string &str, const std::string delimite
     std::string token;
     size_t      i;
 
-    // std::cout << "str = " << str << std::endl;
-    // std::cout << "find\n";
     if ((i = str.find(delimiter)) != std::string::npos){
-        // std::cout << "end find\n";
         token = str.substr(0, i);
         str.erase(0, i + delimiter.length());
         return token;
@@ -31,24 +28,8 @@ void    RequestParser::parse(std::string request){
     bool        is_content_lenght_exists(false);
     bool        is_chuncked(false);
 
-#ifdef DEBUG
-    std::cout << "--------------- Raw Input ------------------" << std::endl;
-    std::cout << request.size() << std::endl;
-#endif
-
     request = request.substr(0, REQUEST_MAX_SIZE);
     
-#ifdef DEBUG
-    for (int i = 0; request.substr(0, 1000)[i] != '\0'; ++i){
-        if (isspace(request[i])){
-            std::cout << "\\";
-        }else{
-            std::cout << request[i];
-        }
-    }
-    std::cout << "---------------------------------" << std::endl;
-#endif
-
     try{
         token = this->get_next(request, delimiter);
     }catch(request_exception &e){
@@ -139,19 +120,15 @@ void    RequestParser::parse(std::string request){
 
             while (i < this->body.size()){
                 
-                // std::cout << "i = " << i << std::endl;
                 pos = this->body.find("\r\n", i);
-                // std::cout << "pos = " << pos << std::endl;
 
                 size_hex = this->body.substr(i, pos - i);
 
-                // std::cout << "size_hex = '" << size_hex.size() << " et " << size_hex.substr(0, 100) << "'" << std::endl;
                 size = (int)std::stol(size_hex, nullptr, 16);
                 if (size == 0){
                     break ;
                 }
                 i += size_hex.size() + 2;;
-                // std::cout << "size = " << size << std::endl;
                 new_body.append(this->body, i, size);
                 i += size + 2;
             }

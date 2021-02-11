@@ -5,6 +5,7 @@
 
 class Server;
 class Location;
+class RequestParser;
 
 class PostHeader
 {

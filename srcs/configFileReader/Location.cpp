@@ -5,7 +5,6 @@ Location::Location(){}
 Location::~Location(){}
 
 void Location::print(){
-#ifdef DEBUG
     std::cout << "__________LOCATION__________" << std::endl;
     std::cout << "DIR : " << this->dir << std::endl;
     std::cout << "METHODS : ";
@@ -18,10 +17,9 @@ void Location::print(){
     std::cout << "DEFAULT_FILE : " << this->default_file << std::endl;
     std::cout << "CGI : ";
     for(std::map<std::string, std::string>::iterator it = this->cgi.begin(); it != this->cgi.end(); ++it){
-        std::cout << it->first << " : " << std::cout << it->second;
+        std::cout << it->first << " : " << it->second;
         std::cout << std::endl;
     }
     std::cout << std::endl;
     std::cout << "UPLOAD : " << this->upload << std::endl;
-#endif
 }

@@ -33,14 +33,12 @@ bool        is_dir(std::string path) {
 }
 
 void        create_file(std::string path, std::string content) {
-    std::cout << path << std::endl;
     int fd = open(path.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 666);
     if (fd == -1)
         return ;
     int ret;
     std::string copy(content);
     while ((ret = write(fd, copy.c_str(), copy.size())) > 0) {
-        std::cout << copy.size() << std::endl;
         if (static_cast<unsigned int>(ret) >= copy.size())
             break ;
         copy = copy.substr(ret);

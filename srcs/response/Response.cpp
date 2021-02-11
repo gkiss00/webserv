@@ -56,7 +56,6 @@ void        Response::setAllowedMethodsHeader() {
 void        Response::getFile() {
     struct stat stats;
 
-    std::cout << query.path << std::endl;
     content = "\n" + file_to_string(query.path) + "\n";
     stat(query.path.c_str(), &stats);
     header.addHeader("Content-Length", std::to_string(content.size() - 1));
@@ -158,9 +157,6 @@ void        Response::_put() {
     struct stat stats;
 
     mkdir_p(server.locations[loc].upload);
-#ifdef DEBUG
-    std::cerr << server.locations[loc].upload + query.path << std::endl;
-#endif
     if (stat(query.path.c_str(), &stats) == 0) {
         if (query.body != "") {
             create_file(server.locations[loc].upload + query.path, query.body);
@@ -258,8 +254,7 @@ void        Response::moveFile()
 void        Response::_post() {
     status = 200;
 
-    if (split(query.path, ".").size() != 0 && server.locations[loc].cgi.count("." + split(query.path, ".").back()) != 0){
-        std::cerr << "." + split(query.path, ".").back() << std::endl;
+    if (split(query.path, ".").size() != 0 && server.locations[loc].cgi.count("." + split(query.path, ".").back()) != 0) {
         this->execCGI();
     } else if (query.body.size() == 0) {
         error(204);
@@ -270,51 +265,6 @@ void        Response::_post() {
     }
 }
 
-// std::string Response::format(std::string str)
-// {
-//     std::string ret = "HTTP_";
-
-//     std::replace(str.begin(), str.end(), '-', '_');
-//     for (int i = 0; i < (int)str.size(); ++i){
-//         ret += toupper(str[i]);
-//     }
-//     return (ret);
-// }
-
-// char        **Response::get_cgi_env(){
-//     char **env = (char **)malloc(100 * sizeof(char *));
-//     int i = 0;
-
-//     env[i++] = strdup("REQUEST_METHOD=POST");
-//     env[i++] = strdup("SERVER_PROTOCOL=HTTP/1.1");
-//     // Because you wont call the cgi directly use the full path as PATH_INFO
-//     env[i++] = strdup("PATH_INFO=/tmp/www/directory/youpi.bla");
-//     env[i++] = strdup(std::string("CONTENT_LENGTH=" + std::to_string(this->query.body.size())).c_str());
-
-//     env[i++] = strdup("AUTH_TYPE=''");
-//     env[i++] = strdup("CONTENT_TYPE=test/file");
-//     env[i++] = strdup("GATEWAY_INTERFACE=CGI/révision");
-//     env[i++] = strdup((std::string("PATH_TRANSLATED=") + server.locations[loc].root + this->query.path).c_str());
-//     env[i++] = strdup("QUERY_STRING=''");
-//     env[i++] = strdup("REMOTE_ADDR=''");
-//     env[i++] = strdup("REMOTE_IDENT=''");
-//     env[i++] = strdup("REMOTE_USER=''");
-//     env[i++] = strdup("REQUEST_URI=/tmp/www/directory/youpi.bla");
-//     env[i++] = strdup("SERVER_NAME=''");
-//     env[i++] = strdup("SCRIPT_NAME=/tmp/cgi-bin/ubuntu_cgi_tester");
-//     env[i++] = strdup("SERVER_PORT=5000");
-//     env[i++] = strdup("SERVER_SOFTWARE=HTTP/1.1");
-
-//     std::map<std::string, std::string>::iterator it = this->query.headers.begin();
-//     std::map<std::string, std::string>::iterator ite = this->query.headers.end();
-//     while (it != ite){
-//         env[i++] = strdup(std::string(format(it->first) + "=" + it->second).c_str());
-//         ++it;
-//     }
-//     env[i++] = NULL;
-//     return (env);
-// }
-
 void        Response::execCGI()
 {
     pid_t   pid;
@@ -322,23 +272,7 @@ void        Response::execCGI()
     pip[0] = 0;
     pip[1] = 1;
 
-#ifdef DEBUG
-    std::cerr << "---------- CGI -----------" << std::endl;
-#endif
-
     std::string cgi_path = server.locations[loc].cgi["." + split(query.path, ".").back()];
-
-    // std::map<std::string, std::string>::iterator it = server.locations[loc].cgi.begin();
-    // std::map<std::string, std::string>::iterator ite = server.locations[loc].cgi.end();
-    // while (it != ite){
-    //     std::cerr << it->first + " and " + it->second << std::endl;
-    //     ++it;
-    // }
-#ifdef DEBUG
-    std::cerr << "---------- CGI path -----------" << std::endl;
-    std::cerr << cgi_path << std::endl;
-    std::cerr << "------------  ------------" << std::endl;
-#endif
 
     status = 404;
 
@@ -360,9 +294,6 @@ void        Response::execCGI()
             close(fd);
             return ;
         } else if (pid == 0) {
-#ifdef DEBUG
-            std::cerr << "---- child ----" << std::endl;
-#endif
             if (close(pip[1]) < 0) //close writing pipe
                 perror("closing write pipe child");
             dup2(pip[0], 0); //redirect pipe read to 0
@@ -371,19 +302,9 @@ void        Response::execCGI()
 
             char    *args[2];
             args[0] = (char *)cgi_path.c_str();
-#ifdef DEBUG
-            std::cerr << "path = " << args[0] << std::endl;
-#endif
             args[1] = NULL;
 
             PostHeader ph(server, server.locations[loc], query);
-#ifdef DEBUG
-            std::cerr << "---- envs ----" << std::endl;
-            for (int i = 0; env[i] != NULL; ++i){
-                std::cerr << "env = " << env[i] << std::endl;
-            }
-            std::cerr << "---- gonna excve ----" << std::endl;
-#endif
             if (fd < 0){
                 perror("/tmp/www/test.txt");
             }else{
@@ -402,13 +323,7 @@ void        Response::execCGI()
 
             std::string request;
             int child_status;
-#ifdef DEBUG
-            std::cerr << "---- wait child to end ----" << std::endl;
-#endif
             waitpid(pid, &child_status, 0);
-#ifdef DEBUG
-            std::cerr << "---- child ended ----" << std::endl;
-#endif
             if (close(fd) < 0)
                 perror("closing tmp");
             if (WIFEXITED(child_status) && WEXITSTATUS(child_status) == -1){
@@ -418,14 +333,8 @@ void        Response::execCGI()
             this->content = file_to_string("/tmp/www/test.txt"); //read file 
             unlink("/tmp/www/test.txt"); //delete file
             std::vector<string> ttt = split(content, "\r\n");
-#ifdef DEBUG
-            std::cerr << ttt.at(ttt.size() - 1).size() << std::endl;
-#endif
 
             header.addHeader("Content-Length", std::to_string(ttt.at(ttt.size() - 1).size()));
-#ifdef DEBUG
-            std::cerr << "---- end ----" << std::endl;
-#endif
         }
     }
 }
@@ -505,5 +414,6 @@ string  Response::render() {
     std::cerr << response.substr(0, 1000);
     std::cerr << "_____        _____" << std::endl;
 #endif
+
     return response;
 }
