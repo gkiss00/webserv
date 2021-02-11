@@ -99,10 +99,14 @@ std::string    MyWebServer::_recv(int sock) {
     char        buf[100001];
     int         ret;
 
-    ret = recv(sock, buf, 100000, 0); 
-    buf[ret] = '\0';
-    if (ret == -1)
+    ret = recv(sock, buf, 100000, 0);
+    if (ret == -1) {
         std::cerr << "recv fail" << std::endl; // must close
+        buf[0] = '\0';
+    } else {
+        buf[ret] = '\0';
+    }
+    
     return std::string(buf);
 }
 
@@ -143,9 +147,73 @@ Server &MyWebServer::server_from_fd(int fd) {
     return servers[0];
 }
 
+#define THREAD_POOL_SIZE 10
+
+pthread_t thread_pool[THREAD_POOL_SIZE];
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+std::queue<int> on_a_pas_une_queue_nous;
+std::list<int> fd_in_use;
+
+int cmptr = 0;
+
+void    MyWebServer::handle_request(int fd) {
+    clients[fd].add_content(_recv(fd));
+    // BLU(clients[fd].is_ready());
+    // GRN(clients[fd].get_content());
+    if (clients[fd].is_ready()) {
+        try {
+            RequestParser   request(clients[fd].get_content());
+            Response response(request, server_from_fd(clients[fd].server_sd));
+                            
+            // client[fd].clear_response();
+            clients[fd].add_response(response.render(), request.command == "PUT");
+
+        } catch(request_exception &e) {
+            std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
+            _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
+        }
+        clients[fd].clear_content();
+    }
+}
+
+void *thread_function(void *arg) {
+    int fd;
+    MyWebServer *ws = (MyWebServer*)arg;
+
+    (void)arg;
+    while (true) {
+        fd = -1;
+
+        pthread_mutex_lock(&mutex);
+        if (on_a_pas_une_queue_nous.empty() == false) {
+            // std::cerr << "i = " << cmptr++ << std::endl;
+            fd = on_a_pas_une_queue_nous.front();
+            // std::cerr << "fd = " << fd << std::endl;
+            on_a_pas_une_queue_nous.pop();
+            // std::cerr << "size = " << on_a_pas_une_queue_nous.size() << std::endl;
+        }
+        pthread_mutex_unlock(&mutex);
+
+        if (fd != -1) {
+            // std::cout << "--- bef ---" << std::endl;
+            ws->handle_request(fd);
+            // std::cout << "--- aft ---" << std::endl;
+            pthread_mutex_lock(&mutex);
+            fd_in_use.remove(fd);
+            // std::cerr << "size = " << fd_in_use.size() << std::endl;
+            pthread_mutex_unlock(&mutex);
+        }
+    }
+}
 
 // RUN
 void    MyWebServer::run() {
+
+    for (int i = 0; i < THREAD_POOL_SIZE; ++i) {
+        pthread_create(&thread_pool[i], NULL, thread_function, this);
+    }
+
     while (true) {
 
         fd_set  reading_sockets, writing_sockets;
@@ -178,49 +246,39 @@ void    MyWebServer::run() {
         // Go through fds
         for (int fd = 0; fd <= max; ++fd) {
 
+            pthread_mutex_lock(&mutex);
+            // std::cout << "--- mutex ---" << std::endl;
+            if (std::count(fd_in_use.begin(), fd_in_use.end(), fd) == 0) {
 
-            // If the fd is in the set
-            if (FD_ISSET(fd, &reading_sockets)) {
+                // If the fd is in the set
+                if (FD_ISSET(fd, &reading_sockets)) {
 
-                // ADD THE CLIENT
-                if (std::count(this->server_sockets.begin(), this->server_sockets.end(), fd)) {
-                    accept_client(fd);
-                }
-                else {
-                    clients[fd].add_content(_recv(fd));
-                    // BLU(clients[fd].is_ready());
-                    // GRN(clients[fd].get_content());
-                    if (clients[fd].is_ready()) {
-                        try {
-                            RequestParser   request(clients[fd].get_content());
-                            Response response(request, server_from_fd(clients[fd].server_sd));
-                            
-                            // client[fd].clear_response();
-                            clients[fd].add_response(response.render(), request.command == "PUT");
-
-                        } catch(request_exception &e) {
-                            std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
-                            _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
-                        }
-                        clients[fd].clear_content();
-                    }
-                }
-            }
-            if (FD_ISSET(fd, &writing_sockets)) {
-
-                std::string mail(clients[fd].get_response());
-
-                if (mail != "") {
-
-                    _send(fd, mail);
-                    clients[fd].clear_response();
-                    
-                    if (clients[fd].get_is_put()) {
-                        remove_client(fd);
+                    if (std::count(this->server_sockets.begin(), this->server_sockets.end(), fd)) {
+                        accept_client(fd);
+                        pthread_mutex_unlock(&mutex);
                         break ;
+                    } else {
+                        fd_in_use.push_back(fd);
+                        on_a_pas_une_queue_nous.push(fd);
+                    }
+                }
+                if (FD_ISSET(fd, &writing_sockets)) {
+                    
+                    std::string mail(clients[fd].get_response());
+
+                    if (mail != "") {
+                        _send(fd, mail);
+                        clients[fd].clear_response();
+
+                        if (clients[fd].get_is_put()) {
+                            remove_client(fd);
+                            pthread_mutex_unlock(&mutex);
+                            break ;
+                        }
                     }
                 }
             }
+            pthread_mutex_unlock(&mutex);
         }
     }
 }

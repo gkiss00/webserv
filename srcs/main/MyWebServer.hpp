@@ -36,6 +36,8 @@ class MyWebServer {
 
         void run();
 
+        void handle_request(int fd);
+
     private:
         std::map<int, Client>  clients; // client_sock : Client
         std::list<int>      queue_clients;
