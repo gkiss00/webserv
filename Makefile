@@ -9,6 +9,7 @@ SRCS =	srcs/main/main.cpp \
 		srcs/tools/split.cpp \
 		srcs/tools/numbers.cpp \
 		srcs/tools/trim.cpp \
+		srcs/tools/ft_htons.cpp \
 		srcs/response/Response.cpp \
 		srcs/response/ResponseHeader.cpp \
 		srcs/response/PostHeader.cpp \

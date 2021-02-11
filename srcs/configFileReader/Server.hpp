@@ -12,6 +12,7 @@ class Server {
 
         int socket;
         int listen;
+        std::string host;
         std::vector<std::string> server_names;
         std::map<int, std::string> error_pages;
         int client_max_body_size;

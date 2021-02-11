@@ -26,4 +26,7 @@ std::string trim(std::string str, std::string tr);
 // POST UTILS
 char    **get_child_env(std::string &query_string);
 
+//hotns forbiden function
+uint16_t ft_htons(uint16_t tmp);
+
 #endif

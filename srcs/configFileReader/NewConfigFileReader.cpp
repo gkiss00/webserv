@@ -42,8 +42,10 @@ Server  NewConfigFileReader::getServer(std::vector<std::string> lines, unsigned 
                 for (unsigned int j = 1; j < args.size(); ++j){
                     server.server_names.push_back(trim(args[j], ";"));
                 }
+            }else if(args[0].compare("host") == 0){
+                server.host = trim(args[1], ";");
             }else if (args[0].compare("client_max_body_size") == 0){ // get the CLIENT_MAX_BODYSIZE of the server
-                server.client_max_body_size = std::stoi(args[1]);
+                server.client_max_body_size = std::stoi(trim(args[1], ";"));
             }else if (args[0].compare("error_page") == 0){ // get the ERROR_PAGES of the server
                 server.error_pages.insert(std::pair<int, std::string>(std::stoi(args[1]), trim(args[2], ";")));
             }else if (args[0].compare("metavariables") == 0){ // get METAVAR of the server
