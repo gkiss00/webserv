@@ -8,7 +8,7 @@
 MyWebServer::MyWebServer(std::string config_path) {
     NewConfigFileReader cfr;
     this->servers = cfr.read(config_path);
-    this->_bind_all("127.0.0.1");
+    this->_bind_all();
 }
 
 MyWebServer::~MyWebServer() {
@@ -38,7 +38,7 @@ int    MyWebServer::new_socket(const char *host, int port) {
     //fill the struct the server socket will refere to
     addrServer.sin_addr.s_addr = inet_addr(host);     //HOST
     addrServer.sin_family = AF_INET;                  //IPV4
-    addrServer.sin_port = htons(port);                //PORT
+    addrServer.sin_port = ft_htons(port);             //PORT
 
     if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
         error_socket ("socket", -1);
@@ -64,9 +64,10 @@ int    MyWebServer::new_socket(const char *host, int port) {
     return sock;
 }
 
-void    MyWebServer::_bind_all (const char *host) {
+void    MyWebServer::_bind_all () {
     for (unsigned int i = 0; i < servers.size(); ++i) {
-        servers.at(i).socket = this->new_socket(host, servers.at(i).listen);
+        std::cout << servers.at(i).host << std::endl;
+        servers.at(i).socket = this->new_socket(servers.at(i).host.c_str(), servers.at(i).listen);
         if(servers.at(i).socket == -1) {
             std::cout << "Error while init server socket" << std::endl;
             exit(EXIT_FAILURE);
@@ -235,14 +236,14 @@ void    MyWebServer::run() {
             FD_SET(it->first, &writing_sockets);
             if (it->first > max) max = it->first;
         }
-
+        //std::cout << "before select" << std::endl;
         // SELECT
         if (select(max + 1, &reading_sockets, &writing_sockets, NULL, NULL) == -1) {
             std::cout << "select failed" << std::endl;
             perror("");
             break ;
         }
-
+        //std::cout << "after select" << std::endl;
         // Go through fds
         for (int fd = 0; fd <= max; ++fd) {
 
@@ -282,6 +283,3 @@ void    MyWebServer::run() {
         }
     }
 }
-
-
-

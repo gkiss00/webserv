@@ -2,9 +2,11 @@
 
 Response::Response(RequestParser &query, Server &server)
 : query(query), server(server) {
+    //std::cout << "in constructor response" << std::endl;
     set_location();
     setAllowedMethodsHeader();
     chdir(server.locations[loc].root.c_str());
+    //std::cout << "out constructor response" << std::endl;
 }
 
 Response::~Response() {}

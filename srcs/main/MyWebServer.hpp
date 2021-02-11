@@ -23,7 +23,7 @@ class MyWebServer {
         // Sockets
         void error_socket (const char * error_msg, int sock);
         int new_socket (const char *host, int port);
-        void _bind_all (const char *host = "127.0.0.1");
+        void _bind_all ();
 
         // Connect
         int accept_client(int server_sock);
