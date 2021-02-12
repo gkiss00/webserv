@@ -387,6 +387,27 @@ void    Response::set_location()
         std::string dir = server.locations[i].dir;
         if (dir[0] == '/')
             dir = dir.substr(1);
+        if (server.locations[i].regexx == true){
+            
+            //std::cout << "path : " << query.path<< std::endl;
+            //std::cout << "rege : " << dir << std::endl;
+            std::regex r(dir);
+            if (std::regex_match (query.path, r) == true){
+                // std::cout << "dir matched" << std::endl;
+                // query.path = dir;
+                // std::vector<string> tmp = split(query.path, "/");
+                // for(unsigned int i = 1; i < tmp.size(); ++i){
+                //     query.path += "/";
+                //     query.path += tmp.at(i);
+                // }
+                // return;
+            }
+        }
+
+        // /tmp/www/regex_pag/index.html
+        // /tmp/www/regex_pag/test.html
+        // /BErdtfyguhijok/test.html
+        
         if (!query.path.compare(0, dir.size(), dir) && dir.size() >= compatibility)
         {
             loc = i;
@@ -394,6 +415,7 @@ void    Response::set_location()
         }
     }
     query.path = query.path.substr(server.locations[loc].dir.size() - 1);
+    std::cout << query.path << std::endl;
     if (query.path[0] == '/') query.path = query.path.substr(1);
 }
 
