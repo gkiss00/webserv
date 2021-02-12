@@ -18,6 +18,10 @@ std::vector<Server> NewConfigFileReader::read(std::string path){
             std::vector<std::string> args = split(line, " "); // get all args of the line
             if (args[0].compare("server") == 0){ //get the server conf
                 servers.push_back(getServer(lines, &(++i)));
+            }else if(args[0].compare("thread_pool_size") == 0){ //get thread_pool_size
+                int tmp = std::stoi(trim(args[1], ";"));
+                if (tmp > 0)
+                    g_thread_pool_size = tmp;
             }
         }
     }

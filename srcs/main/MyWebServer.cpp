@@ -1,7 +1,6 @@
 #include "MyWebServer.hpp"
 #define MAX_CLIENT
 
-
 // Based on https://www.csd.uoc.gr/~hy556/material/tutorials/cs556-3rd-tutorial.pdf
 // https://www.tenouk.com/Module41a.html
 
@@ -211,7 +210,7 @@ void *thread_function(void *arg) {
 
 // RUN
 void    MyWebServer::run() {
-
+    std::cout << "pool size : " << g_thread_pool_size << std::endl;
     for (int i = 0; i < THREAD_POOL_SIZE; ++i) {
         pthread_create(&thread_pool[i], NULL, thread_function, this);
     }
