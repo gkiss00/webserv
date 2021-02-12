@@ -5,6 +5,8 @@
 # include "PostHeader.hpp"
 # include "webserv.hpp"
 
+extern pthread_mutex_t mutex_file;
+
 class Server;
 class RequestParser;
 class ResponseHeader;

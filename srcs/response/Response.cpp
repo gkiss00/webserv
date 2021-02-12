@@ -1,5 +1,6 @@
 #include "Response.hpp"
 
+
 Response::Response(RequestParser &query, Server &server)
 : query(query), server(server) {
     //std::cout << "in constructor response" << std::endl;
@@ -158,6 +159,7 @@ void        Response::_head() {
 void        Response::_put() {
     struct stat stats;
 
+    pthread_mutex_lock(&mutex_file);
     mkdir_p(server.locations[loc].upload);
     if (stat((server.locations[loc].upload + query.path).c_str(), &stats) == 0) {
         if (query.body != "") {
@@ -173,6 +175,7 @@ void        Response::_put() {
         create_file(server.locations[loc].upload + query.path, query.body);
         status = 201; // Created
     }
+    pthread_mutex_unlock(&mutex_file);
     content = "\n";
     header.addHeader("Content-Location", "server.locations[loc].upload" + query.path);
 }
@@ -289,7 +292,8 @@ void        Response::execCGI()
 
     if (status/100 == 2) {
         pipe(pip);
-    
+
+        pthread_mutex_lock(&mutex_file);
         int fd = open("/tmp/www/test.txt", O_CREAT | O_WRONLY | O_TRUNC, 0666);
         pid = fork();
         if (pid == -1) {
@@ -329,12 +333,16 @@ void        Response::execCGI()
             waitpid(pid, &child_status, 0);
             if (close(fd) < 0)
                 perror("closing tmp");
+
             if (WIFEXITED(child_status) && WEXITSTATUS(child_status) == -1){
                 this->content = "";
+                unlink("/tmp/www/test.txt"); //delete file
+                pthread_mutex_unlock(&mutex_file);
                 return ;
             }
             this->content = file_to_string("/tmp/www/test.txt"); //read file 
             unlink("/tmp/www/test.txt"); //delete file
+            pthread_mutex_unlock(&mutex_file);
             std::vector<string> ttt = split(content, "\r\n");
 
             header.addHeader("Content-Length", std::to_string(ttt.at(ttt.size() - 1).size()));
@@ -394,7 +402,7 @@ void    Response::set_location()
             //std::cout << "rege : " << dir << std::endl;
             std::regex r(dir);
             if (std::regex_match (query.path, r) == true){
-                std::cout << "dir matched" << std::endl;
+                // std::cout << "dir matched" << std::endl;
                 //query.path = "regex.html";
                 loc = i;
                 query.path = query.path.substr(query.path.find("/"));
@@ -421,7 +429,7 @@ void    Response::set_location()
     // /directory/test/inex.html
     // index.html
     query.path = query.path.substr(server.locations[loc].dir.size() - 1);
-    std::cout << query.path << std::endl;
+    // std::cout << query.path << std::endl;
     if (query.path[0] == '/') query.path = query.path.substr(1);
 }
 
@@ -438,6 +446,9 @@ string  Response::render() {
         execute();
 
     std::string response(statusLine(status) + header.toString() + content);
+
+    // if (query.command == "POST")
+    //     response = response.substr(0, response.size() - 1);
 
 #ifdef DEBUG
     std::cerr << "_____RESPONSE_____ [" << response.size() << "]" << std::endl;

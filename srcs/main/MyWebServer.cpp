@@ -6,7 +6,15 @@
 
 MyWebServer::MyWebServer(std::string config_path) {
     NewConfigFileReader cfr;
-    this->servers = cfr.read(config_path);
+    try
+    {
+        this->servers = cfr.read(config_path);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "\e[32m" << "Bad file config file" << "\e[m" << std::endl;
+        exit(EXIT_FAILURE);
+    }
     this->_bind_all();
 }
 
@@ -147,7 +155,7 @@ Server &MyWebServer::server_from_fd(int fd) {
     return servers[0];
 }
 
-#define THREAD_POOL_SIZE 5
+#define THREAD_POOL_SIZE 20
 
 pthread_t thread_pool[THREAD_POOL_SIZE];
 pthread_mutex_t mutex_queue = PTHREAD_MUTEX_INITIALIZER;
@@ -163,18 +171,16 @@ void    MyWebServer::handle_request(int fd) {
     // BLU(clients[fd].is_ready());
     // GRN(clients[fd].get_content());
     if (clients[fd].is_ready()) {
-        pthread_mutex_lock(&mutex_file);
         try {
             RequestParser   request(clients[fd].get_content());
             Response        response(request, server_from_fd(clients[fd].server_sd));
-
+    
             clients[fd].add_response(response.render(), request.command == "PUT");
         } catch(request_exception &e) {
             std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
             _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
         }
         clients[fd].clear_content();
-        pthread_mutex_unlock(&mutex_file);
     }
 }
 
@@ -182,29 +188,34 @@ void *thread_function(void *arg) {
     int fd;
     MyWebServer *ws = (MyWebServer*)arg;
 
-    (void)arg;
+    struct timeval last_request, now;
+    int i = 0;
+
     while (true) {
         fd = -1;
 
         pthread_mutex_lock(&mutex_queue);
         if (on_a_pas_une_queue_nous.empty() == false) {
-            // std::cerr << "i = " << cmptr++ << std::endl;
             fd = on_a_pas_une_queue_nous.front();
-            // std::cerr << "fd = " << fd << std::endl;
             on_a_pas_une_queue_nous.pop();
-            // std::cerr << "size = " << on_a_pas_une_queue_nous.size() << std::endl;
         }
         pthread_mutex_unlock(&mutex_queue);
 
         if (fd != -1) {
-            // std::cout << "--- bef ---" << std::endl;
+            gettimeofday(&last_request, NULL);
             ws->handle_request(fd);
-            // std::cout << "--- aft ---" << std::endl;
             pthread_mutex_lock(&mutex_queue);
             fd_in_use.remove(fd);
-            // std::cerr << "size = " << fd_in_use.size() << std::endl;
             pthread_mutex_unlock(&mutex_queue);
         }
+
+        if (i % 10 == 0) { // pour pas trop baiser le cpu
+            gettimeofday(&now, NULL);
+            if (now.tv_usec - last_request.tv_usec > 100000) {
+                usleep(100000);
+            }
+        }
+        ++i;
     }
 }
 
