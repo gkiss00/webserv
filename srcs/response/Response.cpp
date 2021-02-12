@@ -159,7 +159,7 @@ void        Response::_put() {
     struct stat stats;
 
     mkdir_p(server.locations[loc].upload);
-    if (stat(query.path.c_str(), &stats) == 0) {
+    if (stat((server.locations[loc].upload + query.path).c_str(), &stats) == 0) {
         if (query.body != "") {
             create_file(server.locations[loc].upload + query.path, query.body);
             status = 200; // Success
@@ -174,6 +174,7 @@ void        Response::_put() {
         status = 201; // Created
     }
     content = "\n";
+    header.addHeader("Content-Location", "server.locations[loc].upload" + query.path);
 }
 
 //                                        _   
@@ -393,14 +394,14 @@ void    Response::set_location()
             //std::cout << "rege : " << dir << std::endl;
             std::regex r(dir);
             if (std::regex_match (query.path, r) == true){
-                // std::cout << "dir matched" << std::endl;
-                // query.path = dir;
-                // std::vector<string> tmp = split(query.path, "/");
-                // for(unsigned int i = 1; i < tmp.size(); ++i){
-                //     query.path += "/";
-                //     query.path += tmp.at(i);
-                // }
-                // return;
+                std::cout << "dir matched" << std::endl;
+                query.path = dir;
+                std::vector<string> tmp = split(query.path, "/");
+                for(unsigned int i = 1; i < tmp.size(); ++i){
+                    query.path += "/";
+                    query.path += tmp.at(i);
+                }
+                return ;
             }
         }
 
@@ -414,6 +415,8 @@ void    Response::set_location()
             compatibility = dir.size();
         }
     }
+    // /directory/test/inex.html
+    // index.html
     query.path = query.path.substr(server.locations[loc].dir.size() - 1);
     std::cout << query.path << std::endl;
     if (query.path[0] == '/') query.path = query.path.substr(1);
