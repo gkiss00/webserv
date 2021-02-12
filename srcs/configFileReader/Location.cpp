@@ -1,6 +1,8 @@
 #include "Location.hpp"
 
-Location::Location(){}
+Location::Location(){
+    this->regexx = false;
+}
 
 Location::~Location(){}
 
