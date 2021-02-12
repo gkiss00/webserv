@@ -395,13 +395,16 @@ void    Response::set_location()
             std::regex r(dir);
             if (std::regex_match (query.path, r) == true){
                 std::cout << "dir matched" << std::endl;
-                query.path = dir;
-                std::vector<string> tmp = split(query.path, "/");
-                for(unsigned int i = 1; i < tmp.size(); ++i){
-                    query.path += "/";
-                    query.path += tmp.at(i);
-                }
-                return ;
+                //query.path = "regex.html";
+                loc = i;
+                query.path = query.path.substr(query.path.find("/"));
+                // std::vector<string> tmp = split(query.path, "/");
+                // for(unsigned int i = 1; i < tmp.size(); ++i){
+                //     query.path += tmp.at(i);
+                //     if (i != tmp.size() - 1)
+                //         query.path += "/";
+                // }
+                return;
             }
         }
 
