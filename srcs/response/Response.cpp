@@ -1,5 +1,7 @@
 #include "Response.hpp"
 
+pthread_mutex_t mutex_post = PTHREAD_MUTEX_INITIALIZER;
+
 Response::Response(RequestParser &query, Server &server)
 : query(query), server(server) {
     //std::cout << "in constructor response" << std::endl;
@@ -289,7 +291,9 @@ void        Response::execCGI()
     if (status/100 == 2) {
         pipe(pip);
     
+        pthread_mutex_lock(&mutex_post);
         int fd = open("/tmp/www/test.txt", O_CREAT | O_WRONLY | O_TRUNC, 0666);
+        
         pid = fork();
         if (pid == -1) {
             perror("fork");
@@ -307,6 +311,7 @@ void        Response::execCGI()
             args[1] = NULL;
 
             PostHeader ph(server, server.locations[loc], query);
+
             if (fd < 0){
                 perror("/tmp/www/test.txt");
             }else{
@@ -330,13 +335,31 @@ void        Response::execCGI()
                 perror("closing tmp");
             if (WIFEXITED(child_status) && WEXITSTATUS(child_status) == -1){
                 this->content = "";
+                pthread_mutex_unlock(&mutex_post);
                 return ;
             }
+            
             this->content = file_to_string("/tmp/www/test.txt"); //read file 
             unlink("/tmp/www/test.txt"); //delete file
-            std::vector<string> ttt = split(content, "\r\n");
+            pthread_mutex_unlock(&mutex_post);
 
-            header.addHeader("Content-Length", std::to_string(ttt.at(ttt.size() - 1).size()));
+            std::string ttt;
+
+            try{
+                ttt = split(content, "\r\n").back();
+                    
+            }catch (std::exception &e){
+               std::cerr << "----------------- split ------------------" << std::endl;
+                throw e;
+            }
+
+            try{
+                header.addHeader("Content-Length", std::to_string(ttt.size()));
+                    
+            }catch (std::exception &e){
+                std::cerr << "----------------- headers ------------------" << std::endl;
+                throw e;
+            }
         }
     }
 }
@@ -356,11 +379,13 @@ void        Response::execCGI()
 //
 
 void        Response::execute() {
+    static int i = 0;
     if (query.command == "GET") {
         this->_get();
     } else if (query.command == "HEAD") {
         this->_head();
     } else if (query.command == "POST") {
+        std::cerr << "post[" << i++ << "]" << std::endl;
         this->_post();
     } else if (query.command == "PUT") {
         this->_put();

@@ -8,7 +8,7 @@ std::string file_to_string(std::string path) {
 
     int fd = open(path.c_str(), O_RDONLY);
     if (fd == -1){
-        std::cerr << "open RDONLY error" << std::endl;
+        std::cerr << "open RDONLY error, path[" << path << "]" << std::endl;
         return content;
     }
     while ((ret = read(fd, buf, 255)) > 0)
@@ -32,7 +32,10 @@ bool        is_dir(std::string path) {
     return false;
 }
 
+pthread_mutex_t mutex_file = PTHREAD_MUTEX_INITIALIZER;
+
 void        create_file(std::string path, std::string content) {
+    pthread_mutex_lock(&mutex_file);
     int fd = open(path.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 666);
     if (fd == -1)
         return ;
@@ -45,6 +48,7 @@ void        create_file(std::string path, std::string content) {
     }
     if (ret == -1) std::cerr << "write failed" << std::endl;
     close(fd);
+    pthread_mutex_unlock(&mutex_file);
 }
 
 void        mkdir_p(std::string path) {

@@ -30,17 +30,15 @@ class MyWebServer {
         void remove_client(int client_sock);
 
         int _send(int sock, std::string msg);
-        std::string _recv(int sock);
+        std::string _recv(int sock, bool &is_good);
 
         Server &server_from_fd(int fd);
 
         void run();
 
-        void handle_request(int fd);
+        bool handle_request(int fd);
 
-    private:
         std::map<int, Client>  clients; // client_sock : Client
-        std::list<int>      queue_clients;
         std::vector<int>    server_sockets;
         std::vector<Server> servers;
 };
