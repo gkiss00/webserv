@@ -1,6 +1,5 @@
 #include "webserv.hpp"
 
-
 std::string file_to_string(std::string path) {
     std::string content = "";
     int ret;
@@ -8,7 +7,6 @@ std::string file_to_string(std::string path) {
 
     int fd = open(path.c_str(), O_RDONLY);
     if (fd == -1){
-        std::cerr << "open RDONLY error, path[" << path << "]" << std::endl;
         return content;
     }
     while ((ret = read(fd, buf, 255)) > 0)

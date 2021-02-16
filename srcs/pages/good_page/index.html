@@ -50,20 +50,10 @@
     </head>
     <body id="body">
         <h1>Webserv</h1>
-        <h2>Pong</h2>
-        <canvas id="canvas1" width="600" height="400" style="border:1px solid #000000;"></canvas>
-        <div class="buttons">
-            <button id="pongButton" onclick="setPong()">Stop</button>
-        </div>
         <h2>Matrix</h2>
         <canvas id="canvas2" width="600" height="400" style="border:1px solid #000000;"></canvas>
         <div class="buttons">
             <button id="matrixButton" onclick="setMatrix()">Stop</button>
-        </div>
-        <h2>Snake</h2>
-        <canvas id="canvas3" width="600" height="400" style="border:1px solid #000000;"></canvas>
-        <div class="buttons">
-            <button id="snakeButton" onclick="setSnake()">Stop</button>
         </div>
         <canvas id="totalCanvas" style="border:1px solid #000000;"></canvas>
         <footer>
@@ -73,64 +63,6 @@
             //utils
             function getRandomInt(max) {
                 return Math.floor(Math.random() * Math.floor(max));
-            }
-            //**************************************************
-            //**************************************************
-            //PONG
-            //**************************************************
-            //**************************************************
-            var var_pong = setInterval(pong, 50);
-            function setPong(){
-                
-                var b = document.getElementById("pongButton");
-                if (b.innerHTML === "Run"){
-                    b.innerHTML = "Stop";
-                    var_pong = setInterval(pong, 25);
-                }else{
-                    b.innerHTML = "Run";
-                    clearInterval(var_pong);
-                }
-            }
-            //get canvas
-            var canvas1 = document.getElementById("canvas1");
-            var ctx1 = canvas1.getContext("2d");
-
-            //set variables
-            var ball_radius = 10;
-            var x = 10;
-            var y = 100;
-            var velocityX = 5;
-            var velocityY = 5;
-
-            //set White
-            ctx1.fillStyle = "rgb(255, 255, 255, 1)";
-            
-            function pong(){
-                ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
-
-                //rectangles
-                ctx1.fillRect(0, y - 25 , 10, 50);
-                ctx1.fillRect(canvas1.width - 10, (y - 25) , 10, 50);
-
-                //ball
-                ctx1.beginPath();
-                ctx1.arc(x, y, ball_radius, 0, 2*Math.PI);
-                ctx1.fill();
-
-                x += velocityX;
-                y += velocityY;
-                //if balls is on the right
-                if ((x + ball_radius) >= canvas1.width)
-                    velocityX *= -1;
-                //if balls is on the left
-                else if((x - ball_radius) <= 0)
-                    velocityX *= -1;
-                //if balls is on bot
-                if ((y + ball_radius) >= canvas1.height)
-                    velocityY *= -1;
-                //if balls is on top
-                else if ((y - ball_radius) <= 0)
-                    velocityY *= -1;   
             }
 
             //**************************************************
@@ -193,109 +125,6 @@
                     }
                 }
             }
-
-            //**************************************************
-            //**************************************************
-            //SNAKE
-            //**************************************************
-            //**************************************************
-            var var_snake = setInterval(snake, 200);
-            function setSnake(){
-                var b = document.getElementById("snakeButton");
-                if (b.innerHTML === "Run"){
-                    b.innerHTML = "Stop";
-                    var_snake = setInterval(snake, 200);
-                }else{
-                    b.innerHTML = "Run";
-                    clearInterval(var_snake);
-                }
-            }
-
-            //get canvas
-            var canvas3 = document.getElementById("canvas3");
-            var ctx3 = canvas3.getContext("2d");
-
-            var size = 20;
-            var cols_bis = canvas3.width / size;
-            var rows_bis = canvas3.height / size;
-
-            var foodX = getRandomInt(cols_bis);
-            var foodY = getRandomInt(rows_bis);
-
-            var my_snake = [[0, 0], [0, 1], [0, 2]];
-            var direction = 2;
-
-            function snake() {
-                
-                ctx3.clearRect(0, 0, canvas2.width, canvas2.height);
-                //draw food
-                ctx3.fillStyle = "rgb(255, 0, 0, 1)";
-                ctx3.fillRect(foodX * size, foodY * size, size, size);
-                ctx3.beginPath();
-                ctx3.rect(foodX * size, foodY * size, size, size);
-                ctx3.stroke();
-                //draw snake
-                ctx3.fillStyle = "rgb(0, 0, 255, 1)";
-                for (var i = 0; i < my_snake.length; ++i){
-                    ctx3.fillRect(my_snake[i][1] * size, my_snake[i][0] * size, size, size)
-                }
-                ctx3.strokeStyle = "#FFFFFF";
-                //fill cases
-                for (var i = 0; i < rows_bis; ++i){
-                    for (var j = 0; j < cols_bis; ++j){
-                        ctx3.beginPath();
-                        ctx3.rect(j * size, i * size, size, size);
-                        ctx3.stroke();
-                    }
-                }
-                avance();
-                updateFood();
-            }
-
-            function avance(){
-                var next = my_snake[0];
-                //if up
-                if (direction == 1){
-                    next[0] -= 1;
-                //if right
-                }else if (direction == 2){
-                    next[1] += 1;
-                //if down
-                }else if (direction == 3){
-                    next[0] += 1;
-                //if left
-                }else{
-                    next[1] -= 1;
-                }
-                for(var i = my_snake.length - 1; i > 0; --i){
-                    my_snake[i] = my_snake[i - 1];
-                }
-                my_snake[0] = next;
-            }
-
-            function updateFood(){
-                if(my_snake[0][1] == foodX && my_snake[0][0] == foodY){
-                    foodX = getRandomInt(cols_bis);
-                    foodY = getRandomInt(rows_bis);
-                }
-
-            }
-
-            document.addEventListener('keyup', e =>{
-                //left
-                if (e.code == "ArrowRight"){
-                    direction = 2;
-                //up
-                }else if (e.code === "ArrowUp"){
-                    direction = 1;
-                //right
-                }else if (e.code == "ArrowLeft"){
-                    direction = 4;
-                //40
-                }else if (e.code === "ArrowDown"){
-                    direction = 3;
-                }
-            });
 
             //**************************************************
             //**************************************************

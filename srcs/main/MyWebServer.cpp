@@ -1,27 +1,30 @@
 #include "MyWebServer.hpp"
-#define MAX_CLIENT
 
-
-// Based on https://www.csd.uoc.gr/~hy556/material/tutorials/cs556-3rd-tutorial.pdf
-// https://www.tenouk.com/Module41a.html
-
-#define THREAD_POOL_SIZE 5
-
-pthread_t thread_pool[THREAD_POOL_SIZE];
+pthread_t *thread_pool;
 pthread_mutex_t mutex_queue = PTHREAD_MUTEX_INITIALIZER;
 
 std::queue<int> on_a_pas_une_queue_nous;
 std::list<int> fd_in_use;
 
-int cmptr = 0;
-
 pthread_mutex_t mutex_write = PTHREAD_MUTEX_INITIALIZER;
+
+volatile bool can_select_continue;
 
 
 MyWebServer::MyWebServer(std::string config_path) {
     NewConfigFileReader cfr;
-    this->servers = cfr.read(config_path);
+    try
+    {
+        this->servers = cfr.read(config_path);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "\e[32m" << "Bad file config file" << "\e[m" << std::endl;
+        exit(EXIT_FAILURE);
+    }
     this->_bind_all();
+
+    thread_pool = (pthread_t *)malloc(sizeof(pthread_t) * g_thread_pool_size);
 }
 
 MyWebServer::~MyWebServer() {
@@ -35,6 +38,8 @@ MyWebServer::~MyWebServer() {
     {
         close(it->first);
     }
+
+    free(thread_pool);
 }
 
 // SOCKET + BIND
@@ -166,7 +171,6 @@ bool    MyWebServer::handle_request(int fd) {
             Response        response(request, server_from_fd(clients[fd].server_sd));
                       
             clients[fd].add_response(response.render(), request.command == "PUT");
-
         } catch(request_exception &e) {
             std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
             _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
@@ -176,13 +180,13 @@ bool    MyWebServer::handle_request(int fd) {
     return (true);
 }
 
-volatile bool can_select_continue;
-
 void *thread_function(void *arg) {
     int fd;
     MyWebServer *ws = (MyWebServer*)arg;
 
-    (void)arg;
+    struct timeval last_request, now;
+    int i = 0;
+
     while (true) {
         fd = -1;
 
@@ -195,6 +199,8 @@ void *thread_function(void *arg) {
 
         if (fd != -1) {
 
+            gettimeofday(&last_request, NULL);
+
             if (ws->handle_request(fd) == false) {
                 ws->remove_client(fd);
                 can_select_continue = false;
@@ -205,13 +211,21 @@ void *thread_function(void *arg) {
             fd_in_use.remove(fd);
             pthread_mutex_unlock(&mutex_queue);
         }
+
+        if (i % 10 == 0) { // pour pas trop baiser le cpu
+            gettimeofday(&now, NULL);
+            if (now.tv_usec - last_request.tv_usec > 100000) {
+                usleep(100000);
+            }
+        }
+        ++i;
     }
 }
 
 // RUN
 void    MyWebServer::run() {
-
-    for (int i = 0; i < THREAD_POOL_SIZE; ++i) {
+    std::cout << "pool size : " << g_thread_pool_size << std::endl;
+    for (int i = 0; i < g_thread_pool_size; ++i) {
         pthread_create(&thread_pool[i], NULL, thread_function, this);
     }
 
@@ -287,6 +301,8 @@ void    MyWebServer::run() {
                     if (clients.find(fd) != clients.end()) {
 
                         std::string mail(clients[fd].get_response());
+
+                        // if (mail != "" || clients[fd].get_is_put()) { // en theorie il faudrait pas
                         if (mail != "") {
 
                             _send(fd, mail);

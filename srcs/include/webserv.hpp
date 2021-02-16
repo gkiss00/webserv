@@ -28,6 +28,8 @@
 # include <map>
 # include <algorithm>
 
+# include <regex>
+
 # include "../requestParser/RequestParser.hpp"
 # include "../response/Response.hpp"
 # include "tools.hpp"

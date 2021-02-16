@@ -18,6 +18,10 @@ std::vector<Server> NewConfigFileReader::read(std::string path){
             std::vector<std::string> args = split(line, " "); // get all args of the line
             if (args[0].compare("server") == 0){ //get the server conf
                 servers.push_back(getServer(lines, &(++i)));
+            }else if(args[0].compare("thread_pool_size") == 0){ //get thread_pool_size
+                int tmp = std::stoi(trim(args[1], ";"));
+                if (tmp > 0)
+                    g_thread_pool_size = tmp;
             }
         }
     }
@@ -54,7 +58,7 @@ Server  NewConfigFileReader::getServer(std::vector<std::string> lines, unsigned 
                 server.locations.push_back(getLocation(lines, i));
             }
         }
-        ++*i;
+        ++(*i);
     }
     return (server);
 }
@@ -102,19 +106,21 @@ Location    NewConfigFileReader::getLocation(std::vector<std::string> lines, uns
                 location.autoindex = (trim(args[1], ";").compare("on") == 0);
             }else if (args[0].compare("index") == 0){ // get DEFAULT_FILE
                 location.default_file = trim(args[1], ";");
-#ifdef DEBUG
-                std::cout << "0000000000000000" << std::endl;
-                std::cout << location.default_file << std::endl;
-#endif
             }else if (args[0].compare("cgi") == 0){ // get CGI
                 location.cgi.insert(getCGI(lines, i));
             }else if (args[0].compare("upload") == 0){ // get UPLOAD location
                 location.upload = getUpload(lines, i);
             }else if (args[0].compare("methods") == 0){ // get UPLOAD location
                 location.methods = getMethods(lines, i);
+            }else if (args[0].compare("regex") == 0){ //regex
+                if (trim(args[1], ";").compare("on") == 0){
+                    location.regexx = true;
+                } else {
+                    location.regexx = false;
+                }
             }
         }
-        ++*i;
+        ++(*i);
     }
     return (location);
 }

@@ -1,6 +1,9 @@
 #include "Location.hpp"
 
-Location::Location(){}
+Location::Location(){
+    this->regexx = false;
+    this->autoindex = false;
+}
 
 Location::~Location(){}
 

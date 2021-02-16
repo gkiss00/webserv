@@ -161,7 +161,7 @@ void        Response::_put() {
     struct stat stats;
 
     mkdir_p(server.locations[loc].upload);
-    if (stat(query.path.c_str(), &stats) == 0) {
+    if (stat((server.locations[loc].upload + query.path).c_str(), &stats) == 0) {
         if (query.body != "") {
             create_file(server.locations[loc].upload + query.path, query.body);
             status = 200; // Success
@@ -176,6 +176,7 @@ void        Response::_put() {
         status = 201; // Created
     }
     content = "\n";
+    // header.addHeader("Content-Location", server.locations[loc].upload + query.path);
 }
 
 //                                        _   
@@ -333,8 +334,10 @@ void        Response::execCGI()
             waitpid(pid, &child_status, 0);
             if (close(fd) < 0)
                 perror("closing tmp");
+
             if (WIFEXITED(child_status) && WEXITSTATUS(child_status) == -1){
                 this->content = "";
+                unlink("/tmp/www/test.txt"); //delete file
                 pthread_mutex_unlock(&mutex_post);
                 return ;
             }
@@ -412,13 +415,40 @@ void    Response::set_location()
         std::string dir = server.locations[i].dir;
         if (dir[0] == '/')
             dir = dir.substr(1);
+        if (server.locations[i].regexx == true){
+            
+            //std::cout << "path : " << query.path<< std::endl;
+            //std::cout << "rege : " << dir << std::endl;
+            std::regex r(dir);
+            if (std::regex_match (query.path, r) == true){
+                // std::cout << "dir matched" << std::endl;
+                //query.path = "regex.html";
+                loc = i;
+                query.path = query.path.substr(query.path.find("/"));
+                // std::vector<string> tmp = split(query.path, "/");
+                // for(unsigned int i = 1; i < tmp.size(); ++i){
+                //     query.path += tmp.at(i);
+                //     if (i != tmp.size() - 1)
+                //         query.path += "/";
+                // }
+                return;
+            }
+        }
+
+        // /tmp/www/regex_pag/index.html
+        // /tmp/www/regex_pag/test.html
+        // /BErdtfyguhijok/test.html
+        
         if (!query.path.compare(0, dir.size(), dir) && dir.size() >= compatibility)
         {
             loc = i;
             compatibility = dir.size();
         }
     }
+    // /directory/test/inex.html
+    // index.html
     query.path = query.path.substr(server.locations[loc].dir.size() - 1);
+    // std::cout << query.path << std::endl;
     if (query.path[0] == '/') query.path = query.path.substr(1);
 }
 
@@ -435,6 +465,9 @@ string  Response::render() {
         execute();
 
     std::string response(statusLine(status) + header.toString() + content);
+
+    // if (query.command == "POST")
+    //     response = response.substr(0, response.size() - 1);
 
 #ifdef DEBUG
     std::cerr << "_____RESPONSE_____ [" << response.size() << "]" << std::endl;

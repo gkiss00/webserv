@@ -26,14 +26,14 @@ NAME = webserv
 INCDIR = ./srcs/include/
 
 CXX = clang++
-CXXFLAGS = -Wall -Wextra -Werror -I${INCDIR}
+CXXFLAGS = -Wall -Wextra -Werror -I${INCDIR} -pthread
 
 DELETE = rm -f
 
 all: ${NAME}
 	
 ${NAME}: ${OBJS}
-	${CXX} -o ${NAME} ${OBJS}
+	${CXX} ${CXXFLAGS} -o ${NAME} ${OBJS}
 
 clean:
 	${DELETE} ${OBJS}

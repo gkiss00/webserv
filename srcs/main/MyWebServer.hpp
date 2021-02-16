@@ -3,6 +3,8 @@
 
 #include "webserv.hpp"
 
+extern int	g_thread_pool_size;
+
 class Client;
 
 class MyWebServer {
