@@ -112,6 +112,12 @@ Location    NewConfigFileReader::getLocation(std::vector<std::string> lines, uns
                 location.upload = getUpload(lines, i);
             }else if (args[0].compare("methods") == 0){ // get UPLOAD location
                 location.methods = getMethods(lines, i);
+            }else if (args[0].compare("proxy") == 0){ // get UPLOAD location
+                if (trim(args[1], ";").compare("on") == 0){
+                    location.proxy = true;
+                } else {
+                    location.proxy = false;
+                }
             }else if (args[0].compare("regex") == 0){ //regex
                 if (trim(args[1], ";").compare("on") == 0){
                     location.regexx = true;

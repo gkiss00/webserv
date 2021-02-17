@@ -2,6 +2,7 @@
 
 Location::Location(){
     this->regexx = false;
+    this->proxy = false;
     this->autoindex = false;
 }
 

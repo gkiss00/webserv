@@ -2,12 +2,13 @@
 
 Proxy::Proxy(){
     this->addr = "127.0.0.1";
-    this->port = 50000;
+    this->port = 5007;
 }
 
 Proxy::~Proxy(){}
 
 std::string Proxy::getResponse(std::string request) {
+    std::cout << "PROXY CALLED" << std::endl;
     int     socketClient = socket(AF_INET, SOCK_STREAM, 0);
     std::string response;
     struct sockaddr_in addrClient;
