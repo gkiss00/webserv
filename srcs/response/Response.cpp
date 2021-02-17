@@ -417,20 +417,23 @@ void    Response::set_location()
             dir = dir.substr(1);
         if (server.locations[i].regexx == true){
             
-            //std::cout << "path : " << query.path<< std::endl;
-            //std::cout << "rege : " << dir << std::endl;
+            std::cout << "path : " << query.path<< std::endl;
+            std::cout << "rege : " << dir << std::endl;
             std::regex r(dir);
             if (std::regex_match (query.path, r) == true){
+                std::cout << "match" << std::endl;
                 // std::cout << "dir matched" << std::endl;
                 //query.path = "regex.html";
                 loc = i;
                 query.path = query.path.substr(query.path.find("/"));
+                // query.path = "";
                 // std::vector<string> tmp = split(query.path, "/");
                 // for(unsigned int i = 1; i < tmp.size(); ++i){
                 //     query.path += tmp.at(i);
-                //     if (i != tmp.size() - 1)
-                //         query.path += "/";
+                //     //if (i != tmp.size() - 1)
+                //         //query.path += "/";
                 // }
+                std::cout << "path" << query.path << std::endl;
                 return;
             }
         }

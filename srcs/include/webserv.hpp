@@ -39,6 +39,7 @@
 # include "../configFileReader/Location.hpp"
 # include "../client/Client.hpp"
 # include "../main/MyWebServer.hpp"
+# include "../proxy/Proxy.hpp"
 
 // #define DEBUG 1
 
