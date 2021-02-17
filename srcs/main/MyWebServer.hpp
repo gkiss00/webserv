@@ -16,9 +16,9 @@ class MyWebServer {
         };
 
 #ifdef __APPLE__
-        MyWebServer(std::string config_path = "srcs/config/new_macos.conf");
+        MyWebServer(std::string config_path = "srcs/config/macos.conf");
 #else
-        MyWebServer(std::string config_path = "srcs/config/new.conf");
+        MyWebServer(std::string config_path = "srcs/config/linux.conf");
 #endif
         ~MyWebServer();
 
