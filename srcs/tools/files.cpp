@@ -35,8 +35,10 @@ pthread_mutex_t mutex_file = PTHREAD_MUTEX_INITIALIZER;
 void        create_file(std::string path, std::string content) {
     pthread_mutex_lock(&mutex_file);
     int fd = open(path.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 666);
-    if (fd == -1)
+    if (fd == -1) {
+        pthread_mutex_unlock(&mutex_file);
         return ;
+    }
     int ret;
     std::string copy(content);
     while ((ret = write(fd, copy.c_str(), copy.size())) > 0) {

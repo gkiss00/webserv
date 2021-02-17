@@ -6,10 +6,7 @@ pthread_mutex_t mutex_queue = PTHREAD_MUTEX_INITIALIZER;
 std::queue<int> on_a_pas_une_queue_nous;
 std::list<int> fd_in_use;
 
-pthread_mutex_t mutex_write = PTHREAD_MUTEX_INITIALIZER;
-
 volatile bool can_select_continue;
-
 
 MyWebServer::MyWebServer(std::string config_path) {
     NewConfigFileReader cfr;
@@ -67,7 +64,7 @@ int    MyWebServer::new_socket(const char *host, int port) {
     //bind the server socket with the struct
     if (bind(sock, (const struct sockaddr *)&(addrServer), sizeof(addrServer)) == -1)
         error_socket ("bind", sock);
-    std::cout << "Bind #" << sock << ", port #" << port << std::endl;
+    std::cerr << "Bind #" << sock << ", port #" << port << std::endl;
 
     // NONBLOCK
     if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1)
@@ -83,10 +80,10 @@ int    MyWebServer::new_socket(const char *host, int port) {
 
 void    MyWebServer::_bind_all () {
     for (unsigned int i = 0; i < servers.size(); ++i) {
-        std::cout << servers.at(i).host << std::endl;
+        std::cerr << servers.at(i).host << std::endl;
         servers.at(i).socket = this->new_socket(servers.at(i).host.c_str(), servers.at(i).listen);
         if(servers.at(i).socket == -1) {
-            std::cout << "Error while init server socket" << std::endl;
+            std::cerr << "Error while init server socket" << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -118,16 +115,21 @@ int     MyWebServer::accept_client(int server_sock) {
     if ((client_sock = accept(server_sock, &client_ad, &client_len)) < 0)
         perror("accept");
 
-    std::cout << "client #" << client_sock << " connected to #" << server_sock << std::endl;
+    std::cerr << "client #" << client_sock << " connected to #" << server_sock << std::endl;
 
     // Add client to queue / map
     clients[client_sock] = Client(server_sock);
+    std::cerr << "end client" << std::endl;
     return client_sock;
 }
 
 void     MyWebServer::remove_client(int client_sock) {
+    std::cerr << "client #" << client_sock << " remove" << std::endl;
     close(client_sock);
-    clients.erase(client_sock);
+
+    while (clients.find(client_sock) != clients.end()) {
+        clients.erase(client_sock);
+    }
 }
 
 
@@ -172,7 +174,7 @@ bool    MyWebServer::handle_request(int fd) {
                       
             clients[fd].add_response(response.render(), request.command == "PUT");
         } catch(request_exception &e) {
-            std::cout << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
+            std::cerr << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
             _send(fd, "HTTP/1.1 " + std::to_string(e.get_error_status()) + " " + statusCodes()[e.get_error_status()] + "\n");
         }
         clients[fd].clear_content();
@@ -187,10 +189,13 @@ void *thread_function(void *arg) {
     struct timeval last_request, now;
     int i = 0;
 
+    gettimeofday(&last_request, NULL);
+
     while (true) {
         fd = -1;
 
         pthread_mutex_lock(&mutex_queue);
+        // std::cerr << "add thread" << std::endl;
         if (on_a_pas_une_queue_nous.empty() == false) {
             fd = on_a_pas_une_queue_nous.front();
             on_a_pas_une_queue_nous.pop();
@@ -201,18 +206,34 @@ void *thread_function(void *arg) {
 
             gettimeofday(&last_request, NULL);
 
+            // pthread_mutex_lock(&mutex_queue);
+            // for (std::map<int, Client>::const_iterator it = ws->clients.begin(); it != ws->clients.end(); ++it) {
+            //     std::cerr << "beg handle = " << it->first << std::endl;
+            // }
+            // pthread_mutex_unlock(&mutex_queue);
+
             if (ws->handle_request(fd) == false) {
+                // for (std::map<int, Client>::const_iterator it = ws->clients.begin(); it != ws->clients.end(); ++it) {
+                //     std::cerr << "rm = " << it->first << " -> " << ws->clients.size() << std::endl;
+                // }
                 ws->remove_client(fd);
+                // for (std::map<int, Client>::const_iterator it = ws->clients.begin(); it != ws->clients.end(); ++it) {
+                //     std::cerr << "end rm = " << it->first << " -> " << ws->clients.size() << std::endl;
+                // }
                 can_select_continue = false;
                 pthread_mutex_unlock(&mutex_queue);
             }
             
             pthread_mutex_lock(&mutex_queue);
+            // for (std::map<int, Client>::const_iterator it = ws->clients.begin(); it != ws->clients.end(); ++it) {
+            //     std::cerr << "end handle = " << it->first << " -> " << ws->clients.size() << std::endl;
+            // }
             fd_in_use.remove(fd);
+            // std::cerr << "after remove" << std::endl;
             pthread_mutex_unlock(&mutex_queue);
         }
 
-        if (i % 10 == 0) { // pour pas trop baiser le cpu
+        if (i % 10 == 0) { // reduce cpu usgae
             gettimeofday(&now, NULL);
             if (now.tv_usec - last_request.tv_usec > 100000) {
                 usleep(100000);
@@ -224,7 +245,7 @@ void *thread_function(void *arg) {
 
 // RUN
 void    MyWebServer::run() {
-    std::cout << "pool size : " << g_thread_pool_size << std::endl;
+    std::cerr << "pool size : " << g_thread_pool_size << std::endl;
     for (int i = 0; i < g_thread_pool_size; ++i) {
         pthread_create(&thread_pool[i], NULL, thread_function, this);
     }
@@ -244,6 +265,7 @@ void    MyWebServer::run() {
             if (servers[i].socket > max) max = servers[i].socket;
         }
 
+        SELECT:
         pthread_mutex_lock(&mutex_queue);
         for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
         {
@@ -251,14 +273,20 @@ void    MyWebServer::run() {
             FD_SET(it->first, &writing_sockets);
             if (it->first > max) max = it->first;
         }
+        pthread_mutex_unlock(&mutex_queue);
 
         // SELECT
         if (select(max + 1, &reading_sockets, &writing_sockets, NULL, NULL) == -1) {
-            pthread_mutex_unlock(&mutex_queue);
-            perror("select ");
-            break ;
+
+            // for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+            //     std::cerr << "select = " << it->first << std::endl;
+            // }
+            // pthread_mutex_unlock(&mutex_queue);
+            // perror("select ");
+            goto SELECT;
+            // break ;
         }
-        pthread_mutex_unlock(&mutex_queue);
+        // pthread_mutex_unlock(&mutex_queue);
         can_select_continue = true;
 
         // Go through fds
@@ -271,6 +299,8 @@ void    MyWebServer::run() {
                 break ;
             }
 
+            // std::cerr << "reading " << std::endl;
+
             if (std::count(fd_in_use.begin(), fd_in_use.end(), fd) == 0) {
 
                 // If the fd is in the set
@@ -279,6 +309,7 @@ void    MyWebServer::run() {
                     if (std::count(this->server_sockets.begin(), this->server_sockets.end(), fd)) {
                         accept_client(fd);
                         pthread_mutex_unlock(&mutex_queue);
+                        // std::cerr << "break reading " << std::endl;
                         break ;
                     } else {
                         fd_in_use.push_back(fd);
@@ -286,6 +317,7 @@ void    MyWebServer::run() {
                     }
                 }
             }
+            // std::cerr << "end reading " << std::endl;
             pthread_mutex_unlock(&mutex_queue);
 
             if (can_select_continue == false) {
@@ -294,11 +326,16 @@ void    MyWebServer::run() {
             }
 
             pthread_mutex_lock(&mutex_queue);
+            // std::cerr << "writing " << std::endl;
             if (std::count(fd_in_use.begin(), fd_in_use.end(), fd) == 0) {
 
                 if (FD_ISSET(fd, &writing_sockets)) {
 
                     if (clients.find(fd) != clients.end()) {
+
+                        // for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+                        //     std::cerr << "beg write = " << it->first << std::endl;
+                        // }
 
                         std::string mail(clients[fd].get_response());
 
@@ -310,13 +347,22 @@ void    MyWebServer::run() {
 
                             if (clients[fd].get_is_put()) {
                                 remove_client(fd);
+
+                                // for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+                                //     std::cerr << "break write = " << it->first << std::endl;
+                                // }
                                 pthread_mutex_unlock(&mutex_queue);
                                 break ;
                             }
                         }
+
+                        // for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+                        //     std::cerr << "end write = " << it->first << std::endl;
+                        // }
                     }
                 }
             }
+            // std::cerr << "end writing " << std::endl;
             pthread_mutex_unlock(&mutex_queue);
         }
     }
