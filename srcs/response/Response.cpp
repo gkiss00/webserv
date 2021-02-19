@@ -109,10 +109,8 @@ void        Response::_get() {
 
     if (query.path == "")
         query.path = ".";
-    std::cout << "path : " << query.path << std::endl;
     if (stat(query.path.c_str(), &stats) == 0)
     {
-        std::cout << "exist" << std::endl;
         if (is_dir(query.path))
         {
             if (query.path[query.path.size() - 1] != '/')
