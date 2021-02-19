@@ -109,8 +109,10 @@ void        Response::_get() {
 
     if (query.path == "")
         query.path = ".";
+    std::cout << "path : " << query.path << std::endl;
     if (stat(query.path.c_str(), &stats) == 0)
     {
+        std::cout << "exist" << std::endl;
         if (is_dir(query.path))
         {
             if (query.path[query.path.size() - 1] != '/')
@@ -417,23 +419,21 @@ void    Response::set_location()
             dir = dir.substr(1);
         if (server.locations[i].regexx == true){
             
-            std::cout << "path : " << query.path<< std::endl;
-            std::cout << "rege : " << dir << std::endl;
             std::regex r(dir);
             if (std::regex_match (query.path, r) == true){
                 std::cout << "match" << std::endl;
                 // std::cout << "dir matched" << std::endl;
                 //query.path = "regex.html";
                 loc = i;
-                query.path = query.path.substr(query.path.find("/"));
-                // query.path = "";
-                // std::vector<string> tmp = split(query.path, "/");
-                // for(unsigned int i = 1; i < tmp.size(); ++i){
-                //     query.path += tmp.at(i);
-                //     //if (i != tmp.size() - 1)
-                //         //query.path += "/";
-                // }
-                std::cout << "path" << query.path << std::endl;
+                //query.path = query.path.substr(query.path.find("/"));
+                //query.path = "";
+                std::vector<string> tmp = split(query.path, "/");
+                query.path = "";
+                for(unsigned int i = 1; i < tmp.size(); ++i){
+                    query.path += tmp.at(i);
+                    if (i != tmp.size() - 1)
+                        query.path += "/";
+                }
                 return;
             }
         }
