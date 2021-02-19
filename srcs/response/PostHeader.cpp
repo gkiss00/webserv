@@ -67,12 +67,22 @@ char **PostHeader::toTable() {
     std::string tmp;
     std::map<std::string, std::string>::iterator it;
     char **table = (char **)malloc((content.size() + 1) * sizeof(char*));
+    if (table == NULL) {
+        return (NULL);
+    }
     size_t i = 0;
 
     for (it = content.begin(); it != content.end(); it++)
     {
         tmp = ((*it).first + "=" + (*it).second);
         char *cstr = (char *)malloc((tmp.size() + 1) * sizeof(char));
+        if (cstr == NULL) {
+            for (size_t j = 0; j < i; ++j) {
+                free(table[j]);
+            }
+            free(table);
+            return (NULL);
+        }
         for (size_t j = 0; j <= tmp.size(); ++j) {
             cstr[j] = tmp[j];
         }

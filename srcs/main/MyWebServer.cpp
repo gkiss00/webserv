@@ -54,25 +54,35 @@ int    MyWebServer::new_socket(const char *host, int port) {
     addrServer.sin_family = AF_INET;                  //IPV4
     addrServer.sin_port = ft_htons(port);             //PORT
 
-    if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
+    if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
         error_socket ("socket", -1);
+        return -1;
+    }
 
     int option = 1;
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int)) == -1)
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int)) == -1) {
         error_socket ("setsockopt SO_REUSEADDR", sock);
+        return -1;
+    }
 
     //bind the server socket with the struct
-    if (bind(sock, (const struct sockaddr *)&(addrServer), sizeof(addrServer)) == -1)
+    if (bind(sock, (const struct sockaddr *)&(addrServer), sizeof(addrServer)) == -1) {
         error_socket ("bind", sock);
+        return -1;
+    }
     std::cerr << "Bind #" << sock << ", port #" << port << std::endl;
 
     // NONBLOCK
-    if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1)
+    if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1) {
         error_socket ("Non blocking", sock);
+        return -1;
+    }
 
     // Listen
-    if (listen(sock, 1000) == -1)
+    if (listen(sock, 1000) == -1) {
         error_socket ("Listen", sock); // 1000 queue accepted
+        return -1;
+    }
     
     this->server_sockets.push_back(sock);
     return sock;
@@ -112,21 +122,20 @@ int     MyWebServer::accept_client(int server_sock) {
     socklen_t           client_len = sizeof(client_ad);
 
     // Wait for a client to connect
-    if ((client_sock = accept(server_sock, &client_ad, &client_len)) < 0)
+    if ((client_sock = accept(server_sock, &client_ad, &client_len)) < 0) {
         perror("accept");
+        return -1;
+    }
 
     std::cerr << "client #" << client_sock << " connected to #" << server_sock << std::endl;
 
     // Add client to queue / map
     clients[client_sock] = Client(server_sock);
-    std::cerr << "end client" << std::endl;
     return client_sock;
 }
 
 void     MyWebServer::remove_client(int client_sock) {
-    std::cerr << "client #" << client_sock << " remove" << std::endl;
     close(client_sock);
-
     while (clients.find(client_sock) != clients.end()) {
         clients.erase(client_sock);
     }
@@ -195,7 +204,6 @@ void *thread_function(void *arg) {
         fd = -1;
 
         pthread_mutex_lock(&mutex_queue);
-        // std::cerr << "add thread" << std::endl;
         if (on_a_pas_une_queue_nous.empty() == false) {
             fd = on_a_pas_une_queue_nous.front();
             on_a_pas_une_queue_nous.pop();
@@ -206,30 +214,14 @@ void *thread_function(void *arg) {
 
             gettimeofday(&last_request, NULL);
 
-            // pthread_mutex_lock(&mutex_queue);
-            // for (std::map<int, Client>::const_iterator it = ws->clients.begin(); it != ws->clients.end(); ++it) {
-            //     std::cerr << "beg handle = " << it->first << std::endl;
-            // }
-            // pthread_mutex_unlock(&mutex_queue);
-
             if (ws->handle_request(fd) == false) {
-                // for (std::map<int, Client>::const_iterator it = ws->clients.begin(); it != ws->clients.end(); ++it) {
-                //     std::cerr << "rm = " << it->first << " -> " << ws->clients.size() << std::endl;
-                // }
                 ws->remove_client(fd);
-                // for (std::map<int, Client>::const_iterator it = ws->clients.begin(); it != ws->clients.end(); ++it) {
-                //     std::cerr << "end rm = " << it->first << " -> " << ws->clients.size() << std::endl;
-                // }
                 can_select_continue = false;
                 pthread_mutex_unlock(&mutex_queue);
             }
             
             pthread_mutex_lock(&mutex_queue);
-            // for (std::map<int, Client>::const_iterator it = ws->clients.begin(); it != ws->clients.end(); ++it) {
-            //     std::cerr << "end handle = " << it->first << " -> " << ws->clients.size() << std::endl;
-            // }
             fd_in_use.remove(fd);
-            // std::cerr << "after remove" << std::endl;
             pthread_mutex_unlock(&mutex_queue);
         }
 
@@ -277,16 +269,8 @@ void    MyWebServer::run() {
 
         // SELECT
         if (select(max + 1, &reading_sockets, &writing_sockets, NULL, NULL) == -1) {
-
-            // for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-            //     std::cerr << "select = " << it->first << std::endl;
-            // }
-            // pthread_mutex_unlock(&mutex_queue);
-            // perror("select ");
             goto SELECT;
-            // break ;
         }
-        // pthread_mutex_unlock(&mutex_queue);
         can_select_continue = true;
 
         // Go through fds
@@ -299,8 +283,6 @@ void    MyWebServer::run() {
                 break ;
             }
 
-            // std::cerr << "reading " << std::endl;
-
             if (std::count(fd_in_use.begin(), fd_in_use.end(), fd) == 0) {
 
                 // If the fd is in the set
@@ -309,7 +291,6 @@ void    MyWebServer::run() {
                     if (std::count(this->server_sockets.begin(), this->server_sockets.end(), fd)) {
                         accept_client(fd);
                         pthread_mutex_unlock(&mutex_queue);
-                        // std::cerr << "break reading " << std::endl;
                         break ;
                     } else {
                         fd_in_use.push_back(fd);
@@ -317,7 +298,6 @@ void    MyWebServer::run() {
                     }
                 }
             }
-            // std::cerr << "end reading " << std::endl;
             pthread_mutex_unlock(&mutex_queue);
 
             if (can_select_continue == false) {
@@ -326,20 +306,14 @@ void    MyWebServer::run() {
             }
 
             pthread_mutex_lock(&mutex_queue);
-            // std::cerr << "writing " << std::endl;
             if (std::count(fd_in_use.begin(), fd_in_use.end(), fd) == 0) {
 
                 if (FD_ISSET(fd, &writing_sockets)) {
 
                     if (clients.find(fd) != clients.end()) {
 
-                        // for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-                        //     std::cerr << "beg write = " << it->first << std::endl;
-                        // }
-
                         std::string mail(clients[fd].get_response());
 
-                        // if (mail != "" || clients[fd].get_is_put()) { // en theorie il faudrait pas
                         if (mail != "") {
 
                             _send(fd, mail);
@@ -347,22 +321,13 @@ void    MyWebServer::run() {
 
                             if (clients[fd].get_is_put()) {
                                 remove_client(fd);
-
-                                // for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-                                //     std::cerr << "break write = " << it->first << std::endl;
-                                // }
                                 pthread_mutex_unlock(&mutex_queue);
                                 break ;
                             }
                         }
-
-                        // for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-                        //     std::cerr << "end write = " << it->first << std::endl;
-                        // }
                     }
                 }
             }
-            // std::cerr << "end writing " << std::endl;
             pthread_mutex_unlock(&mutex_queue);
         }
     }

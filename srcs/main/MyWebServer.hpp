@@ -10,11 +10,6 @@ class Client;
 class MyWebServer {
     public:
 
-        class BindFailed : public std::exception {
-            public:
-                virtual const char * what() const throw();
-        };
-
 #ifdef __APPLE__
         MyWebServer(std::string config_path = "srcs/config/macos.conf");
 #else
