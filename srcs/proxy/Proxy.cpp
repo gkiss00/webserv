@@ -18,11 +18,19 @@ std::string Proxy::getResponse(std::string request) {
     addrClient.sin_family = AF_INET;
     addrClient.sin_port = ft_htons(this->port);
 
-    connect(socketClient, (const struct sockaddr *)&addrClient, sizeof(addrClient));
-    send(socketClient, request.c_str(), request.size() + 1, 0);
+    if (connect(socketClient, (const struct sockaddr *)&addrClient, sizeof(addrClient)) < 0)
+        return "";
+    if (send(socketClient, request.c_str(), request.size() + 1, 0) < 0){
+        close(socketClient);
+        return "";
+    }
     int ret = recv(socketClient, buff, 10000, 0);
+    if (ret < 0){
+        close(socketClient);
+        return "";
+    }
     buff[ret] = '\0';
     response += buff;
-
+    close(socketClient);
     return response;
 }

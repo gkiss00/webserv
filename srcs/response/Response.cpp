@@ -457,8 +457,12 @@ void    Response::set_location()
 
 string  Response::render() {
     if (server.locations[loc].proxy == true){
-        Proxy p;
-        return p.getResponse(query.full_request);
+        try {
+            Proxy p;
+            return p.getResponse(query.full_request);
+        }catch(std::exception e){
+            return "";
+        }
     }
     std::vector<std::string> allImplementedMethods = implementedMethods();
 
